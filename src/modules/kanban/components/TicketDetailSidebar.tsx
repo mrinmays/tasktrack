@@ -315,23 +315,39 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
 
                 <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 min-h-0">
                   {isJira && selectedTicket.jiraData && (
-                    <div className="flex items-center gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-md font-medium">
-                          {selectedTicket.jiraData.jiraKey}
-                        </span>
-                        <CopyButton text={selectedTicket.jiraData.jiraKey} />
+                    <div className="pb-3 border-b border-neutral-100 dark:border-neutral-800 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-md font-medium">
+                            {selectedTicket.jiraData.jiraKey}
+                          </span>
+                          <CopyButton text={selectedTicket.jiraData.jiraKey} />
+                        </div>
+                        {selectedTicket.jiraData.jiraUrl && (
+                          <a
+                            href={selectedTicket.jiraData.jiraUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                          >
+                            Open in JIRA
+                            <ExternalLink className="size-3" aria-hidden />
+                          </a>
+                        )}
                       </div>
-                      {selectedTicket.jiraData.jiraUrl && (
-                        <a
-                          href={selectedTicket.jiraData.jiraUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
-                        >
-                          Open in JIRA
-                          <ExternalLink className="size-3" aria-hidden />
-                        </a>
+                      {(selectedTicket.jiraData.status || selectedTicket.jiraData.priority) && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedTicket.jiraData.status && (
+                            <span className="inline-flex items-center px-2.5 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-md text-xs font-medium">
+                              {selectedTicket.jiraData.status}
+                            </span>
+                          )}
+                          {selectedTicket.jiraData.priority && (
+                            <span className="inline-flex items-center px-2.5 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-md text-xs font-medium">
+                              {selectedTicket.jiraData.priority}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
@@ -407,41 +423,6 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                       {selectedTicket.type}
                     </p>
                   </div>
-
-                  {isJira && selectedTicket.jiraData && (
-                    <>
-                      {selectedTicket.jiraData.status && (
-                        <div>
-                          <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-                            Status
-                          </span>
-                          <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
-                            {selectedTicket.jiraData.status}
-                          </p>
-                        </div>
-                      )}
-                      {selectedTicket.jiraData.assignee && (
-                        <div>
-                          <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-                            Assignee
-                          </span>
-                          <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
-                            {selectedTicket.jiraData.assignee}
-                          </p>
-                        </div>
-                      )}
-                      {selectedTicket.jiraData.priority && (
-                        <div>
-                          <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-                            Priority
-                          </span>
-                          <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
-                            {selectedTicket.jiraData.priority}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
