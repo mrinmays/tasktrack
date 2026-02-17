@@ -80,12 +80,10 @@ export function InboxSidebar({
     syncing,
     adding,
     moveTicketToColumn,
-    handleTicketUpdate,
     handleTicketDelete,
     deletingTicket,
     addTicketToInbox,
     syncFromJira,
-    refresh,
   } = useInbox();
   const [showAddForm, setShowAddForm] = useState(false);
   const [addTitle, setAddTitle] = useState("");
@@ -230,8 +228,6 @@ export function InboxSidebar({
               onMove={moveTicketToColumn}
               onDelete={handleTicketDelete}
               deleting={deletingTicket}
-              onTicketUpdate={handleTicketUpdate}
-              onRefresh={refresh}
             />
           ))}
         </div>
@@ -511,7 +507,7 @@ export function InboxSidebar({
                 />
                 <div className="space-y-1.5">
                   <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Ticket ID (optional)
+                    Link to ticket ID (optional)
                   </span>
                   <Select.Root
                     value={

@@ -1,14 +1,14 @@
-import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { GripVertical, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type { Column } from '@/modules/kanban/types';
-import type { Ticket } from '@/db/database';
-import type { MoveTarget } from '@/modules/kanban/components/TicketCard';
-import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
-import { TicketCard } from './TicketCard';
+import { useDndContext, useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { GripVertical, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { Column } from "@/modules/kanban/types";
+import type { Ticket } from "@/db/database";
+import type { MoveTarget } from "@/modules/kanban/components/TicketCard";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import { TicketCard } from "./TicketCard";
 
 interface KanbanColumnProps {
   readonly column: Column;
@@ -20,11 +20,6 @@ interface KanbanColumnProps {
   readonly onTicketMove: (ticketId: string, columnId: string) => void;
   readonly onTicketDelete: (ticketId: string) => void;
   readonly deletingTicket: boolean;
-  readonly onTicketUpdate: (
-    ticketId: string,
-    updates: { title?: string; description?: string }
-  ) => void;
-  readonly onRefresh: () => void;
   readonly onStartFocus?: (ticket: Ticket) => void;
   readonly focusActive?: boolean;
 }
@@ -39,8 +34,6 @@ export function KanbanColumn({
   onTicketMove,
   onTicketDelete,
   deletingTicket,
-  onTicketUpdate,
-  onRefresh,
   onStartFocus,
   focusActive,
 }: KanbanColumnProps) {
@@ -59,12 +52,12 @@ export function KanbanColumn({
     isDragging,
   } = useSortable({
     id: column.id,
-    data: { type: 'column' as const },
+    data: { type: "column" as const },
     disabled: isEditing,
   });
 
   const { active } = useDndContext();
-  const isTicketDragActive = active?.data.current?.type === 'ticket';
+  const isTicketDragActive = active?.data.current?.type === "ticket";
 
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: column.id,
@@ -121,9 +114,9 @@ export function KanbanColumn({
             onChange={(e) => setEditTitle(e.target.value)}
             onBlur={handleTitleSubmit}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 handleTitleSubmit();
-              } else if (e.key === 'Escape') {
+              } else if (e.key === "Escape") {
                 handleTitleCancel();
               }
             }}
@@ -198,15 +191,17 @@ export function KanbanColumn({
             />
           </div>
         )}
-        <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{tickets.length} tickets</div>
+        <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          {tickets.length} tickets
+        </div>
       </div>
 
       <div
         ref={setDropRef}
         className={`flex-1 overflow-y-auto min-h-[8rem] rounded-md border-2 border-dashed p-2 transition-colors duration-150 ${
           isTicketDropOver
-            ? 'border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
-            : 'border-neutral-200/60 dark:border-neutral-600/60'
+            ? "border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
+            : "border-neutral-200/60 dark:border-neutral-600/60"
         }`}
       >
         {tickets.map((ticket) => (
@@ -217,8 +212,6 @@ export function KanbanColumn({
             onMove={onTicketMove}
             onDelete={onTicketDelete}
             deleting={deletingTicket}
-            onTicketUpdate={onTicketUpdate}
-            onRefresh={onRefresh}
             onStartFocus={onStartFocus}
             focusActive={focusActive}
           />

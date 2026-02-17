@@ -1,29 +1,21 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import * as Select from "@radix-ui/react-select";
 import {
   ArrowRightLeft,
   ChevronRight,
   Eye,
   MoreVertical,
-  Pencil,
   PlayCircle,
   Trash2,
 } from "lucide-react";
 import { Tooltip } from "@/components/Tooltip";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
 import { stripHtml } from "@/utils/sanitizeHtml";
-import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
-import { isEmptyEditorHtml } from "@/utils/editorHtml";
-import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
-
-type EditablePriority = TicketPriority | "none";
 
 export interface MoveTarget {
   id: string;
@@ -36,15 +28,6 @@ interface TicketCardProps {
   readonly onMove?: (ticketId: string, columnId: string) => void;
   readonly onDelete?: (ticketId: string) => void;
   readonly deleting?: boolean;
-  readonly onTicketUpdate?: (
-    ticketId: string,
-    updates: {
-      title?: string;
-      description?: string;
-      priority?: TicketPriority | undefined;
-    },
-  ) => void;
-  readonly onRefresh?: () => void;
   readonly onStartFocus?: (ticket: Ticket) => void;
   readonly focusActive?: boolean;
 }
@@ -55,24 +38,11 @@ export function TicketCard({
   onMove,
   onDelete,
   deleting = false,
-  onTicketUpdate,
-  onRefresh,
   onStartFocus,
   focusActive = false,
 }: TicketCardProps) {
   const { openTicketDetail } = useTicketDetail();
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState(ticket.title);
-  const [editDescription, setEditDescription] = useState(
-    ticket.description ?? "",
-  );
-  const [editPriority, setEditPriority] = useState<EditablePriority>(
-    ticket.priority ?? "none",
-  );
-  const editTitleRef = useRef(ticket.title);
-  const editDescRef = useRef(ticket.description ?? "");
-  const editPriorityRef = useRef(ticket.priority);
 
   useEffect(() => {
     registerTicket(ticket);
@@ -100,45 +70,12 @@ export function TicketCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const hasMenuActions = Boolean(
-    onMove || onDelete || (onTicketUpdate && onRefresh),
-  );
+  const hasMenuActions = Boolean(onMove || onDelete);
   const showMenu = Boolean(moveTargets && hasMenuActions);
   const moveDestinations =
     showMenu && moveTargets
       ? moveTargets.filter((t) => t.id !== ticket.columnId)
       : [];
-
-  const openEdit = () => {
-    editTitleRef.current = ticket.title;
-    editDescRef.current = ticket.description ?? "";
-    editPriorityRef.current = ticket.priority;
-    setEditTitle(ticket.title);
-    setEditDescription(ticket.description ?? "");
-    setEditPriority(ticket.priority ?? "none");
-    setEditOpen(true);
-  };
-
-  const saveEdit = () => {
-    const title = editTitle.trim();
-    const rawDesc = editDescription.trim();
-    const desc = rawDesc && !isEmptyEditorHtml(rawDesc) ? rawDesc : undefined;
-    const priority = editPriority === "none" ? undefined : editPriority;
-    if (
-      title &&
-      (title !== editTitleRef.current ||
-        desc !== (editDescRef.current ?? "") ||
-        priority !== editPriorityRef.current)
-    ) {
-      onTicketUpdate?.(ticket.id, {
-        title,
-        description: desc,
-        priority,
-      });
-      onRefresh?.();
-    }
-    setEditOpen(false);
-  };
 
   const dragProps = showMenu ? {} : { ...attributes, ...listeners };
   const contentDragProps = showMenu ? { ...attributes, ...listeners } : {};
@@ -222,6 +159,13 @@ export function TicketCard({
                 sideOffset={8}
                 align="start"
               >
+                <DropdownMenu.Item
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
+                  onSelect={() => openTicketDetail(ticket)}
+                >
+                  <Eye className="size-3.5" aria-hidden />
+                  View details
+                </DropdownMenu.Item>
                 {onMove && moveDestinations.length > 0 && (
                   <DropdownMenu.Sub>
                     <DropdownMenu.SubTrigger className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none">
@@ -249,22 +193,6 @@ export function TicketCard({
                       </DropdownMenu.SubContent>
                     </DropdownMenu.Portal>
                   </DropdownMenu.Sub>
-                )}
-                <DropdownMenu.Item
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
-                  onSelect={() => openTicketDetail(ticket)}
-                >
-                  <Eye className="size-3.5" aria-hidden />
-                  View details
-                </DropdownMenu.Item>
-                {onTicketUpdate && onRefresh && (
-                  <DropdownMenu.Item
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
-                    onSelect={openEdit}
-                  >
-                    <Pencil className="size-3.5" aria-hidden />
-                    Edit
-                  </DropdownMenu.Item>
                 )}
                 {onDelete && (
                   <>
@@ -312,122 +240,6 @@ export function TicketCard({
           </Tooltip>
         </div>
       )}
-
-      <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-          <Dialog.Content
-            className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white dark:bg-neutral-800 p-4 shadow-xl"
-            onCloseAutoFocus={(e) => e.preventDefault()}
-          >
-            <Dialog.Title className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-              Edit ticket
-            </Dialog.Title>
-            <Dialog.Description className="sr-only">
-              Edit ticket title and description
-            </Dialog.Description>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                saveEdit();
-              }}
-              className="mt-3 space-y-3"
-            >
-              <label className="block">
-                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Title
-                </span>
-                <textarea
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  rows={1}
-                  className="mt-1 w-full rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none"
-                  required
-                />
-              </label>
-              <label htmlFor="ticket-edit-description" className="block">
-                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Description
-                </span>
-                <div className="mt-1">
-                  <TicketDescriptionEditor
-                    id="ticket-edit-description"
-                    value={editDescription}
-                    onChange={setEditDescription}
-                    placeholder="Description (optional)"
-                    minHeight="4rem"
-                  />
-                </div>
-              </label>
-              {ticket.type === "local" && (
-                <label className="block">
-                  <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    Priority
-                  </span>
-                  <Select.Root
-                    value={editPriority}
-                    onValueChange={(value) =>
-                      setEditPriority(value as EditablePriority)
-                    }
-                  >
-                    <Select.Trigger className="mt-1 inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none">
-                      <Select.Value placeholder="No priority" />
-                      <Select.Icon>
-                        <ChevronRight
-                          className="size-3.5 text-neutral-500 dark:text-neutral-400 rotate-90"
-                          aria-hidden
-                        />
-                      </Select.Icon>
-                    </Select.Trigger>
-                    <Select.Portal>
-                      <Select.Content
-                        className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
-                        position="popper"
-                        sideOffset={4}
-                        align="start"
-                      >
-                        <Select.Viewport className="p-1">
-                          <Select.Item
-                            value="none"
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                          >
-                            <Select.ItemText>No priority</Select.ItemText>
-                          </Select.Item>
-                          {TICKET_PRIORITY_VALUES.map((priority) => (
-                            <Select.Item
-                              key={priority}
-                              value={priority}
-                              className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
-                            >
-                              <Select.ItemText>{priority}</Select.ItemText>
-                            </Select.Item>
-                          ))}
-                        </Select.Viewport>
-                      </Select.Content>
-                    </Select.Portal>
-                  </Select.Root>
-                </label>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Dialog.Close asChild>
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-600"
-                  >
-                    Cancel
-                  </button>
-                </Dialog.Close>
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 text-sm font-medium text-white dark:text-neutral-900 bg-neutral-800 dark:bg-neutral-200 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
 
       {onDelete && (
         <DeleteConfirmationDialog
