@@ -1,4 +1,4 @@
-# TaskTrack
+# tasktrack
 
 A task tracking application with Kanban boards, focus modes, and Jira integration.
 
@@ -39,7 +39,7 @@ pnpm build
 
 ## JIRA Integration
 
-TaskTrack integrates with JIRA via OAuth 2.0. Configure your credentials in the Settings dialog.
+tasktrack integrates with JIRA via OAuth 2.0. Configure your credentials in the Settings dialog.
 
 For local testing, add `http://localhost:5173` to your OAuth callback URLs in the Atlassian Developer Console.
 
