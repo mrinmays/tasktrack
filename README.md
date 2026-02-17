@@ -37,6 +37,12 @@ Build for production:
 pnpm build
 ```
 
+## JIRA Integration
+
+TaskTrack integrates with JIRA via OAuth 2.0. Configure your credentials in the Settings dialog.
+
+For local testing, add `http://localhost:5173` to your OAuth callback URLs in the Atlassian Developer Console.
+
 ## Project Structure
 
 - `src/modules/`: Feature modules (kanban, inbox, focus, search, settings, tickets)
