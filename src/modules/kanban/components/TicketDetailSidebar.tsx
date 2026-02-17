@@ -1,23 +1,29 @@
-import { Formik, Form, Field, ErrorMessage, useFormikContext } from 'formik';
-import * as Select from '@radix-ui/react-select';
-import * as Yup from 'yup';
-import { Check, ChevronDown, X, ExternalLink, Copy } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useTicketDetail } from '@/hooks/useTicketDetail';
-import { updateTicket } from '@/modules/tickets';
-import { isValidTicketKey } from '@/modules/tickets/utils/validateTicketKey';
-import { useJiraTicketsQuery } from '@/modules/tickets/hooks/useTicketsQuery';
-import { TicketDescriptionEditor } from '@/components/TicketDescriptionEditor';
-import { isEmptyEditorHtml } from '@/utils/editorHtml';
-import { SanitizedHtml } from './SanitizedHtml';
+import { Formik, Form, Field, ErrorMessage, useFormikContext } from "formik";
+import * as Select from "@radix-ui/react-select";
+import * as Yup from "yup";
+import { Check, ChevronDown, X, ExternalLink, Copy } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTicketDetail } from "@/hooks/useTicketDetail";
+import { updateTicket } from "@/modules/tickets";
+import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
+import { useJiraTicketsQuery } from "@/modules/tickets/hooks/useTicketsQuery";
+import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
+import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
+import { isEmptyEditorHtml } from "@/utils/editorHtml";
+import { SanitizedHtml } from "./SanitizedHtml";
+
+type EditablePriority = TicketPriority | "none";
 
 const ticketValidationSchema = Yup.object({
-  title: Yup.string().trim().required('Title is required'),
+  title: Yup.string().trim().required("Title is required"),
   description: Yup.string().trim().optional(),
+  priority: Yup.mixed<EditablePriority>()
+    .oneOf(["none", ...TICKET_PRIORITY_VALUES])
+    .optional(),
   customKey: Yup.string()
     .trim()
     .optional()
-    .test('jira-format', 'Must be in format PROJ-123', (value) => {
+    .test("jira-format", "Must be in format PROJ-123", (value) => {
       if (!value) return true;
       return isValidTicketKey(value);
     }),
@@ -55,64 +61,48 @@ function TicketDescriptionField({ id }: { readonly id?: string }) {
   return (
     <TicketDescriptionEditor
       id={id}
-      value={values.description ?? ''}
-      onChange={(html) => setFieldValue('description', html)}
+      value={values.description ?? ""}
+      onChange={(html) => setFieldValue("description", html)}
       placeholder="Description (optional)"
       minHeight="5rem"
     />
   );
 }
 
-function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly string[] }) {
-  const { setFieldValue, values, errors, touched } =
-    useFormikContext<{ customKey: string }>();
+function TicketKeyField({
+  jiraKeyOptions,
+}: {
+  readonly jiraKeyOptions: readonly string[];
+}) {
+  const { setFieldValue, values, errors, touched } = useFormikContext<{
+    customKey: string;
+  }>();
 
-  const [selectMode, setSelectMode] = useState<'none' | 'existing' | 'other'>('none');
-  const [selectedKey, setSelectedKey] = useState('');
-  const [customKeyInput, setCustomKeyInput] = useState('');
-  const [customKeyError, setCustomKeyError] = useState('');
+  const [customKeyInput, setCustomKeyInput] = useState("");
+  const [customKeyError, setCustomKeyError] = useState("");
 
-  // Sync with formik value on mount or when value changes
-  useMemo(() => {
-    const currentValue = values.customKey ?? '';
-    if (currentValue === '') {
-      setSelectMode('none');
-      setSelectedKey('');
-      setCustomKeyInput('');
-    } else if (jiraKeyOptions.includes(currentValue)) {
-      setSelectMode('existing');
-      setSelectedKey(currentValue);
-      setCustomKeyInput('');
-    } else {
-      setSelectMode('other');
-      setSelectedKey('');
-      setCustomKeyInput(currentValue);
-    }
-  }, [values.customKey, jiraKeyOptions]);
-
-  const resolvedCustomKey =
-    selectMode === 'existing' ? selectedKey
-    : selectMode === 'other' ? customKeyInput.trim().toUpperCase()
-    : '';
-
-  // Sync back to formik
-  useMemo(() => {
-    setFieldValue('customKey', resolvedCustomKey);
-  }, [resolvedCustomKey, setFieldValue]);
+  const currentValue = values.customKey ?? "";
+  const selectMode: "none" | "existing" | "other" =
+    currentValue === ""
+      ? "none"
+      : jiraKeyOptions.includes(currentValue)
+        ? "existing"
+        : "other";
+  const selectedKey = selectMode === "existing" ? currentValue : "";
+  const resolvedCustomKeyInput =
+    selectMode === "other" ? customKeyInput || currentValue : customKeyInput;
 
   const handleSelectChange = (val: string) => {
-    setCustomKeyError('');
-    if (val === 'none') {
-      setSelectMode('none');
-      setSelectedKey('');
-      setCustomKeyInput('');
-    } else if (val === 'other') {
-      setSelectMode('other');
-      setSelectedKey('');
+    setCustomKeyError("");
+    if (val === "none") {
+      setCustomKeyInput("");
+      setFieldValue("customKey", "");
+    } else if (val === "other") {
+      setCustomKeyInput("");
+      setFieldValue("customKey", "");
     } else {
-      setSelectMode('existing');
-      setSelectedKey(val);
-      setCustomKeyInput('');
+      setCustomKeyInput("");
+      setFieldValue("customKey", val);
     }
   };
 
@@ -124,7 +114,7 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
         Ticket ID
       </span>
       <Select.Root
-        value={selectMode === 'existing' ? selectedKey : selectMode}
+        value={selectMode === "existing" ? selectedKey : selectMode}
         onValueChange={handleSelectChange}
       >
         <Select.Trigger
@@ -133,7 +123,10 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
         >
           <Select.Value placeholder="No ticket ID" />
           <Select.Icon>
-            <ChevronDown className="size-3.5 text-neutral-500 dark:text-neutral-400" aria-hidden />
+            <ChevronDown
+              className="size-3.5 text-neutral-500 dark:text-neutral-400"
+              aria-hidden
+            />
           </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
@@ -166,7 +159,9 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
                     >
                       <Select.ItemText>
                         <span className="inline-flex items-center gap-1.5">
-                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">{key}</span>
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">
+                            {key}
+                          </span>
                         </span>
                       </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto">
@@ -190,39 +185,45 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
           </Select.Content>
         </Select.Portal>
       </Select.Root>
-      {selectMode === 'other' && (
+      {selectMode === "other" && (
         <div>
           <input
             type="text"
-            value={customKeyInput}
+            value={resolvedCustomKeyInput}
             onChange={(e) => {
-              setCustomKeyInput(e.target.value);
-              if (customKeyError) setCustomKeyError('');
+              const next = e.target.value;
+              setCustomKeyInput(next);
+              setFieldValue("customKey", next.trim().toUpperCase());
+              if (customKeyError) setCustomKeyError("");
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') e.preventDefault();
+              if (e.key === "Enter") e.preventDefault();
             }}
             onBlur={() => {
-              const val = customKeyInput.trim().toUpperCase();
+              const val = resolvedCustomKeyInput.trim().toUpperCase();
               if (val && !isValidTicketKey(val)) {
-                setCustomKeyError('Must be in format PROJ-123');
+                setCustomKeyError("Must be in format PROJ-123");
               }
             }}
             placeholder="e.g. PROJ-123"
             className={`w-full px-3 py-2 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${
               showError || customKeyError
-                ? 'border-red-400 dark:border-red-500'
-                : 'border-neutral-300 dark:border-neutral-600'
+                ? "border-red-400 dark:border-red-500"
+                : "border-neutral-300 dark:border-neutral-600"
             }`}
           />
           {(showError || customKeyError) && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.customKey || customKeyError}</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              {errors.customKey || customKeyError}
+            </p>
           )}
         </div>
       )}
-      {selectMode === 'existing' && selectedKey && (
+      {selectMode === "existing" && selectedKey && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">Currently selected:</span>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            Currently selected:
+          </span>
           <span className="inline-block text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
             {selectedKey}
           </span>
@@ -232,36 +233,58 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
   );
 }
 
-export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void }) {
-  const { selectedTicket, closeTicketDetail, openTicketDetail } = useTicketDetail();
+export function TicketDetailSidebar({
+  onSaved,
+}: {
+  readonly onSaved?: () => void;
+}) {
+  const { selectedTicket, closeTicketDetail, openTicketDetail } =
+    useTicketDetail();
   const jiraTicketsQuery = useJiraTicketsQuery();
   const jiraKeyOptions = useMemo(
-    () => (jiraTicketsQuery.data ?? []).map((t) => t.jiraData?.jiraKey).filter(Boolean) as string[],
+    () =>
+      (jiraTicketsQuery.data ?? [])
+        .map((t) => t.jiraData?.jiraKey)
+        .filter(Boolean) as string[],
     [jiraTicketsQuery.data],
   );
 
   const isOpen = selectedTicket !== null;
-  const isJira = selectedTicket?.type === 'jira';
+  const isJira = selectedTicket?.type === "jira";
   const isEditable = !isJira;
 
-  const handleSave = async (values: { title: string; description: string; customKey: string }) => {
+  const handleSave = async (values: {
+    title: string;
+    description: string;
+    customKey: string;
+    priority: EditablePriority;
+  }) => {
     if (!selectedTicket || !isEditable) return;
     const title = values.title.trim();
-    const rawDesc = values.description?.trim() ?? '';
-    const description = rawDesc && !isEmptyEditorHtml(rawDesc) ? rawDesc : undefined;
+    const rawDesc = values.description?.trim() ?? "";
+    const description =
+      rawDesc && !isEmptyEditorHtml(rawDesc) ? rawDesc : undefined;
     const customKey = values.customKey?.trim().toUpperCase() || undefined;
+    const priority = values.priority === "none" ? undefined : values.priority;
     const hasChanges =
       title !== selectedTicket.title ||
-      description !== (selectedTicket.description ?? '') ||
-      customKey !== (selectedTicket.customKey ?? undefined);
+      description !== (selectedTicket.description ?? "") ||
+      customKey !== (selectedTicket.customKey ?? undefined) ||
+      priority !== selectedTicket.priority;
     if (hasChanges) {
-      await updateTicket(selectedTicket.id, { title, description, customKey: customKey ?? '' });
+      await updateTicket(selectedTicket.id, {
+        title,
+        description,
+        customKey: customKey ?? "",
+        priority,
+      });
       // Update context's selectedTicket so Formik resets dirty flag
       openTicketDetail({
         ...selectedTicket,
         title,
         description: description || undefined,
         customKey: customKey || undefined,
+        priority,
         updatedAt: Date.now(),
       });
       onSaved?.();
@@ -281,7 +304,9 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
         className="fixed right-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-2xl z-50 flex flex-col border-l border-neutral-200 dark:border-neutral-700 transition-transform duration-300 ease-in-out"
         style={{
           width: SIDEBAR_WIDTH,
-          transform: isOpen ? 'translateX(0)' : `translateX(${SIDEBAR_WIDTH}px)`,
+          transform: isOpen
+            ? "translateX(0)"
+            : `translateX(${SIDEBAR_WIDTH}px)`,
         }}
         aria-label="Ticket details"
       >
@@ -290,8 +315,9 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
             key={selectedTicket.id}
             initialValues={{
               title: selectedTicket.title,
-              description: selectedTicket.description ?? '',
-              customKey: selectedTicket.customKey ?? '',
+              description: selectedTicket.description ?? "",
+              customKey: selectedTicket.customKey ?? "",
+              priority: selectedTicket.priority ?? "none",
             }}
             validationSchema={ticketValidationSchema}
             onSubmit={handleSave}
@@ -301,7 +327,7 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
               <Form className="flex flex-col h-full">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
                   <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2">
-                    {isJira ? 'JIRA Ticket' : 'Ticket Details'}
+                    {isJira ? "JIRA Ticket" : "Ticket Details"}
                   </h2>
                   <button
                     type="button"
@@ -335,7 +361,8 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                           </a>
                         )}
                       </div>
-                      {(selectedTicket.jiraData.status || selectedTicket.jiraData.priority) && (
+                      {(selectedTicket.jiraData.status ||
+                        selectedTicket.jiraData.priority) && (
                         <div className="flex flex-wrap gap-2">
                           {selectedTicket.jiraData.status && (
                             <span className="inline-flex items-center px-2.5 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-md text-xs font-medium">
@@ -407,7 +434,9 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                             className="ticket-description-content"
                           />
                         ) : (
-                          <p className="text-neutral-500 dark:text-neutral-400">No description</p>
+                          <p className="text-neutral-500 dark:text-neutral-400">
+                            No description
+                          </p>
                         )}
                       </div>
                     )}
@@ -417,8 +446,103 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                     <TicketKeyField jiraKeyOptions={jiraKeyOptions} />
                   )}
 
+                  {isEditable && (
+                    <div>
+                      <label
+                        htmlFor="ticket-priority"
+                        className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
+                      >
+                        Priority
+                      </label>
+                      <Field name="priority">
+                        {({
+                          field,
+                          form,
+                        }: {
+                          field: { value: EditablePriority };
+                          form: {
+                            setFieldValue: (
+                              name: string,
+                              value: EditablePriority,
+                            ) => void;
+                          };
+                        }) => (
+                          <Select.Root
+                            value={field.value}
+                            onValueChange={(value) =>
+                              form.setFieldValue(
+                                "priority",
+                                value as EditablePriority,
+                              )
+                            }
+                          >
+                            <Select.Trigger
+                              id="ticket-priority"
+                              className="inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
+                              aria-label="Priority"
+                            >
+                              <Select.Value placeholder="No priority" />
+                              <Select.Icon>
+                                <ChevronDown
+                                  className="size-3.5 text-neutral-500 dark:text-neutral-400"
+                                  aria-hidden
+                                />
+                              </Select.Icon>
+                            </Select.Trigger>
+                            <Select.Portal>
+                              <Select.Content
+                                className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
+                                position="popper"
+                                sideOffset={4}
+                                align="start"
+                              >
+                                <Select.Viewport className="p-1">
+                                  <Select.Item
+                                    value="none"
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                                  >
+                                    <Select.ItemText>
+                                      No priority
+                                    </Select.ItemText>
+                                    <Select.ItemIndicator className="ml-auto">
+                                      <Check className="size-3.5" aria-hidden />
+                                    </Select.ItemIndicator>
+                                  </Select.Item>
+                                  {TICKET_PRIORITY_VALUES.map((priority) => (
+                                    <Select.Item
+                                      key={priority}
+                                      value={priority}
+                                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                                    >
+                                      <Select.ItemText>
+                                        {priority}
+                                      </Select.ItemText>
+                                      <Select.ItemIndicator className="ml-auto">
+                                        <Check
+                                          className="size-3.5"
+                                          aria-hidden
+                                        />
+                                      </Select.ItemIndicator>
+                                    </Select.Item>
+                                  ))}
+                                </Select.Viewport>
+                              </Select.Content>
+                            </Select.Portal>
+                          </Select.Root>
+                        )}
+                      </Field>
+                      <ErrorMessage
+                        name="priority"
+                        component="p"
+                        className="text-xs text-red-600 dark:text-red-400 mt-1"
+                      />
+                    </div>
+                  )}
+
                   <div>
-                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Type</span>
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                      Type
+                    </span>
                     <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 capitalize">
                       {selectedTicket.type}
                     </p>
@@ -430,7 +554,9 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                         Created
                       </span>
                       <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
-                        {new Date(selectedTicket.createdAt).toLocaleDateString()}
+                        {new Date(
+                          selectedTicket.createdAt,
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
@@ -438,7 +564,9 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                         Updated
                       </span>
                       <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
-                        {new Date(selectedTicket.updatedAt).toLocaleDateString()}
+                        {new Date(
+                          selectedTicket.updatedAt,
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -462,7 +590,7 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                       disabled={isSubmitting || !dirty}
                       className="px-4 py-2 text-sm font-medium text-white dark:text-neutral-900 bg-neutral-800 dark:bg-neutral-200 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors"
                     >
-                      {isSubmitting ? 'Saving…' : 'Save'}
+                      {isSubmitting ? "Saving…" : "Save"}
                     </button>
                   </div>
                 )}

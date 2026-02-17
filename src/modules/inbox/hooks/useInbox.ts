@@ -12,6 +12,7 @@ import {
 import { useInboxTicketsQuery } from '@/modules/inbox/hooks/useInboxTicketsQuery';
 import { useJiraSyncMutation } from '@/modules/inbox/hooks/useJiraSyncMutation';
 import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
+import type { TicketPriority } from '@/modules/tickets';
 
 export function useInbox() {
   const queryClient = useQueryClient();
@@ -37,7 +38,7 @@ export function useInbox() {
 
   const handleTicketUpdate = (
     ticketId: string,
-    updates: { title?: string; description?: string }
+    updates: { title?: string; description?: string; priority?: TicketPriority }
   ) => {
     updateTicketMutation.mutate({ id: ticketId, updates });
   };
@@ -52,12 +53,14 @@ export function useInbox() {
     title: string,
     description?: string,
     customKey?: string,
+    priority?: TicketPriority,
     onSuccess?: () => void
   ) => {
     createTicketMutation.mutate(
       {
         title,
         description,
+        priority,
         type: 'local',
         columnId: INBOX_COLUMN_ID,
         customKey,

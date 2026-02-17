@@ -1,6 +1,9 @@
 import type { Ticket } from '@/db/database';
+import type { TicketPriority } from '@/utils/ticketPriority';
 
 export type TicketType = 'jira' | 'local';
+
+export type { TicketPriority };
 
 export interface JiraTicket extends Ticket {
   type: 'jira';

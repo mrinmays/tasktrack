@@ -16,6 +16,7 @@ import {
   useMoveTicketMutation,
   useUpdateTicketMutation,
 } from '@/modules/tickets/hooks/useTicketsQuery';
+import type { TicketPriority } from '@/modules/tickets';
 
 function sortTicketsByOrder(a: Ticket, b: Ticket): number {
   if (a.order !== b.order) {
@@ -53,7 +54,7 @@ export function useKanban() {
 
   const handleTicketUpdate = (
     ticketId: string,
-    updates: { title?: string; description?: string }
+    updates: { title?: string; description?: string; priority?: TicketPriority }
   ) => {
     updateTicketMutation.mutate({ id: ticketId, updates });
   };

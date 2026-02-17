@@ -1,10 +1,12 @@
 import { db, type Ticket } from '@/db/database';
+import type { TicketPriority } from '@/utils/ticketPriority';
 
-type CreateTicketInput = Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'order'> & {
+type CreateTicketInput = Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'order' | 'priority'> & {
   id?: string;
   createdAt?: number;
   updatedAt?: number;
   order?: number;
+  priority?: TicketPriority;
 };
 
 function sortTicketsByOrder(a: Ticket, b: Ticket): number {
@@ -33,6 +35,7 @@ export async function createTicket(ticket: CreateTicketInput): Promise<Ticket> {
   const nextOrder = ticket.order ?? (await getNextOrderForColumn(ticket.columnId));
   const newTicket: Ticket = {
     ...ticket,
+    priority: ticket.priority,
     id: ticket.id ?? crypto.randomUUID(),
     order: nextOrder,
     createdAt: ticket.createdAt ?? now,

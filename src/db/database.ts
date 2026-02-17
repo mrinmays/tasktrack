@@ -1,9 +1,14 @@
 import Dexie, { type Table } from 'dexie';
+import {
+  normalizeTicketPriority,
+  type TicketPriority,
+} from '@/utils/ticketPriority';
 
 export interface Ticket {
   id: string;
   title: string;
   description?: string;
+  priority?: TicketPriority;
   type: 'jira' | 'local';
   columnId: string;
   order: number;
@@ -93,6 +98,32 @@ export class TaskTrackDatabase extends Dexie {
       const ticketsTable = transaction.table<Ticket, string>('tickets');
       await ticketsTable.where('type').equals('custom').modify({ type: 'local' });
     });
+    this.version(5)
+      .stores({
+        tickets: 'id, columnId, type, createdAt, order, [columnId+order]',
+        columns: 'id, order',
+        settings: 'key',
+      })
+      .upgrade(async (transaction) => {
+        type TicketWithOptionalPriority = Omit<Ticket, 'priority'> & {
+          priority?: TicketPriority;
+        };
+
+        const ticketsTable = transaction.table<TicketWithOptionalPriority, string>('tickets');
+        const tickets = await ticketsTable.toArray();
+        if (tickets.length === 0) {
+          return;
+        }
+
+        const migratedTickets: Ticket[] = tickets.map((ticket) => ({
+          ...ticket,
+          priority: ticket.priority
+            ? normalizeTicketPriority(ticket.priority)
+            : normalizeTicketPriority(ticket.jiraData?.priority),
+        }));
+
+        await ticketsTable.bulkPut(migratedTickets);
+      });
   }
 }
 

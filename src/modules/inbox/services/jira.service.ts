@@ -8,6 +8,7 @@ import {
   isJiraCloud,
 } from '@/modules/settings';
 import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
+import { normalizeTicketPriority } from '@/utils/ticketPriority';
 
 const SKIP_RENDERED_FIELDS = new Set([
   'summary', 'description', 'status', 'assignee', 'priority',
@@ -82,19 +83,28 @@ async function issuesToTickets(
       assignee: issue.fields.assignee?.displayName,
       priority: issue.fields.priority?.name,
     };
+    const priority = normalizeTicketPriority(issue.fields.priority?.name);
 
     const existing = existingByJiraKey.get(issue.key);
     if (existing) {
       await updateTicket(existing.id, {
         title: issue.fields.summary,
         description,
+        priority,
         jiraData: { ...existing.jiraData, ...jiraData },
       });
-      updated.push({ ...existing, title: issue.fields.summary, description, jiraData: { ...existing.jiraData, ...jiraData } });
+      updated.push({
+        ...existing,
+        title: issue.fields.summary,
+        description,
+        priority,
+        jiraData: { ...existing.jiraData, ...jiraData },
+      });
     } else {
       const createdTicket = await createTicket({
         title: issue.fields.summary,
         description,
+        priority,
         type: 'jira',
         columnId: INBOX_COLUMN_ID,
         jiraData,

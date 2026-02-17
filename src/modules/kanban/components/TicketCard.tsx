@@ -1,17 +1,29 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import * as Dialog from '@radix-ui/react-dialog';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ArrowRightLeft, ChevronRight, Eye, MoreVertical, Pencil, PlayCircle, Trash2 } from 'lucide-react';
-import { Tooltip } from '@/components/Tooltip';
-import { useEffect, useRef, useState } from 'react';
-import type { Ticket } from '@/db/database';
-import { registerTicket, unregisterTicket } from '@/contexts/ticketRegistry';
-import { useTicketDetail } from '@/hooks/useTicketDetail';
-import { stripHtml } from '@/utils/sanitizeHtml';
-import { TicketDescriptionEditor } from '@/components/TicketDescriptionEditor';
-import { isEmptyEditorHtml } from '@/utils/editorHtml';
-import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as Select from "@radix-ui/react-select";
+import {
+  ArrowRightLeft,
+  ChevronRight,
+  Eye,
+  MoreVertical,
+  Pencil,
+  PlayCircle,
+  Trash2,
+} from "lucide-react";
+import { Tooltip } from "@/components/Tooltip";
+import { useEffect, useRef, useState } from "react";
+import type { Ticket } from "@/db/database";
+import { registerTicket, unregisterTicket } from "@/contexts/ticketRegistry";
+import { useTicketDetail } from "@/hooks/useTicketDetail";
+import { stripHtml } from "@/utils/sanitizeHtml";
+import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
+import { isEmptyEditorHtml } from "@/utils/editorHtml";
+import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+
+type EditablePriority = TicketPriority | "none";
 
 export interface MoveTarget {
   id: string;
@@ -24,7 +36,14 @@ interface TicketCardProps {
   readonly onMove?: (ticketId: string, columnId: string) => void;
   readonly onDelete?: (ticketId: string) => void;
   readonly deleting?: boolean;
-  readonly onTicketUpdate?: (ticketId: string, updates: { title?: string; description?: string }) => void;
+  readonly onTicketUpdate?: (
+    ticketId: string,
+    updates: {
+      title?: string;
+      description?: string;
+      priority?: TicketPriority | undefined;
+    },
+  ) => void;
   readonly onRefresh?: () => void;
   readonly onStartFocus?: (ticket: Ticket) => void;
   readonly focusActive?: boolean;
@@ -45,9 +64,15 @@ export function TicketCard({
   const [editOpen, setEditOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(ticket.title);
-  const [editDescription, setEditDescription] = useState(ticket.description ?? '');
+  const [editDescription, setEditDescription] = useState(
+    ticket.description ?? "",
+  );
+  const [editPriority, setEditPriority] = useState<EditablePriority>(
+    ticket.priority ?? "none",
+  );
   const editTitleRef = useRef(ticket.title);
-  const editDescRef = useRef(ticket.description ?? '');
+  const editDescRef = useRef(ticket.description ?? "");
+  const editPriorityRef = useRef(ticket.priority);
 
   useEffect(() => {
     registerTicket(ticket);
@@ -64,7 +89,7 @@ export function TicketCard({
   } = useSortable({
     id: ticket.id,
     data: {
-      type: 'ticket' as const,
+      type: "ticket" as const,
       columnId: ticket.columnId,
     },
   });
@@ -75,16 +100,22 @@ export function TicketCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const hasMenuActions = Boolean(onMove || onDelete || (onTicketUpdate && onRefresh));
+  const hasMenuActions = Boolean(
+    onMove || onDelete || (onTicketUpdate && onRefresh),
+  );
   const showMenu = Boolean(moveTargets && hasMenuActions);
   const moveDestinations =
-    showMenu && moveTargets ? moveTargets.filter((t) => t.id !== ticket.columnId) : [];
+    showMenu && moveTargets
+      ? moveTargets.filter((t) => t.id !== ticket.columnId)
+      : [];
 
   const openEdit = () => {
     editTitleRef.current = ticket.title;
-    editDescRef.current = ticket.description ?? '';
+    editDescRef.current = ticket.description ?? "";
+    editPriorityRef.current = ticket.priority;
     setEditTitle(ticket.title);
-    setEditDescription(ticket.description ?? '');
+    setEditDescription(ticket.description ?? "");
+    setEditPriority(ticket.priority ?? "none");
     setEditOpen(true);
   };
 
@@ -92,8 +123,18 @@ export function TicketCard({
     const title = editTitle.trim();
     const rawDesc = editDescription.trim();
     const desc = rawDesc && !isEmptyEditorHtml(rawDesc) ? rawDesc : undefined;
-    if (title && (title !== editTitleRef.current || desc !== (editDescRef.current ?? ''))) {
-      onTicketUpdate?.(ticket.id, { title, description: desc });
+    const priority = editPriority === "none" ? undefined : editPriority;
+    if (
+      title &&
+      (title !== editTitleRef.current ||
+        desc !== (editDescRef.current ?? "") ||
+        priority !== editPriorityRef.current)
+    ) {
+      onTicketUpdate?.(ticket.id, {
+        title,
+        description: desc,
+        priority,
+      });
       onRefresh?.();
     }
     setEditOpen(false);
@@ -106,12 +147,12 @@ export function TicketCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col ${showMenu ? '' : 'cursor-move'}`}
+      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col ${showMenu ? "" : "cursor-move"}`}
       {...dragProps}
     >
       <div className="flex items-start justify-between gap-2">
         <div
-          className={`flex-1 min-w-0 ${showMenu ? 'cursor-move' : ''}`}
+          className={`flex-1 min-w-0 ${showMenu ? "cursor-move" : ""}`}
           {...contentDragProps}
         >
           <button
@@ -124,12 +165,12 @@ export function TicketCard({
           >
             {ticket.title}
           </button>
-          {ticket.description && typeof ticket.description === 'string' && (
+          {ticket.description && typeof ticket.description === "string" && (
             <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
               {stripHtml(ticket.description)}
             </p>
           )}
-          {ticket.type === 'jira' && ticket.jiraData && (
+          {ticket.type === "jira" && ticket.jiraData && (
             <div className="mt-2 flex items-center flex-wrap gap-2">
               <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">
                 {ticket.jiraData.jiraKey}
@@ -141,10 +182,22 @@ export function TicketCard({
               )}
             </div>
           )}
-          {ticket.type === 'local' && ticket.customKey && (
+          {ticket.type === "local" && ticket.customKey && (
             <div className="mt-2 flex items-center gap-2">
               <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
                 {ticket.customKey}
+              </span>
+              {ticket.priority && (
+                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium">
+                  {ticket.priority}
+                </span>
+              )}
+            </div>
+          )}
+          {ticket.type === "local" && !ticket.customKey && ticket.priority && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium">
+                {ticket.priority}
               </span>
             </div>
           )}
@@ -173,8 +226,8 @@ export function TicketCard({
                   <DropdownMenu.Sub>
                     <DropdownMenu.SubTrigger className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none">
                       <span className="flex items-center gap-2">
-                      <ArrowRightLeft className="size-3.5" aria-hidden />
-                      Move to…
+                        <ArrowRightLeft className="size-3.5" aria-hidden />
+                        Move to…
                       </span>
                       <ChevronRight className="size-3.5 shrink-0" aria-hidden />
                     </DropdownMenu.SubTrigger>
@@ -237,7 +290,13 @@ export function TicketCard({
 
       {onStartFocus && (
         <div className="flex justify-end mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
-          <Tooltip content={focusActive ? 'Another ticket is in focus' : 'Start focused work session'}>
+          <Tooltip
+            content={
+              focusActive
+                ? "Another ticket is in focus"
+                : "Start focused work session"
+            }
+          >
             <button
               type="button"
               disabled={focusActive}
@@ -264,7 +323,9 @@ export function TicketCard({
             <Dialog.Title className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Edit ticket
             </Dialog.Title>
-            <Dialog.Description className="sr-only">Edit ticket title and description</Dialog.Description>
+            <Dialog.Description className="sr-only">
+              Edit ticket title and description
+            </Dialog.Description>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -273,7 +334,9 @@ export function TicketCard({
               className="mt-3 space-y-3"
             >
               <label className="block">
-                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Title</span>
+                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Title
+                </span>
                 <textarea
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
@@ -283,7 +346,9 @@ export function TicketCard({
                 />
               </label>
               <label htmlFor="ticket-edit-description" className="block">
-                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Description</span>
+                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Description
+                </span>
                 <div className="mt-1">
                   <TicketDescriptionEditor
                     id="ticket-edit-description"
@@ -294,6 +359,55 @@ export function TicketCard({
                   />
                 </div>
               </label>
+              {ticket.type === "local" && (
+                <label className="block">
+                  <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                    Priority
+                  </span>
+                  <Select.Root
+                    value={editPriority}
+                    onValueChange={(value) =>
+                      setEditPriority(value as EditablePriority)
+                    }
+                  >
+                    <Select.Trigger className="mt-1 inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none">
+                      <Select.Value placeholder="No priority" />
+                      <Select.Icon>
+                        <ChevronRight
+                          className="size-3.5 text-neutral-500 dark:text-neutral-400 rotate-90"
+                          aria-hidden
+                        />
+                      </Select.Icon>
+                    </Select.Trigger>
+                    <Select.Portal>
+                      <Select.Content
+                        className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
+                        position="popper"
+                        sideOffset={4}
+                        align="start"
+                      >
+                        <Select.Viewport className="p-1">
+                          <Select.Item
+                            value="none"
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                          >
+                            <Select.ItemText>No priority</Select.ItemText>
+                          </Select.Item>
+                          {TICKET_PRIORITY_VALUES.map((priority) => (
+                            <Select.Item
+                              key={priority}
+                              value={priority}
+                              className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                            >
+                              <Select.ItemText>{priority}</Select.ItemText>
+                            </Select.Item>
+                          ))}
+                        </Select.Viewport>
+                      </Select.Content>
+                    </Select.Portal>
+                  </Select.Root>
+                </label>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <Dialog.Close asChild>
                   <button
