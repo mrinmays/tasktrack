@@ -130,10 +130,15 @@ export function TicketCard({
             </p>
           )}
           {ticket.type === 'jira' && ticket.jiraData && (
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex items-center flex-wrap gap-2">
               <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">
                 {ticket.jiraData.jiraKey}
               </span>
+              {ticket.jiraData.priority && (
+                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium">
+                  {ticket.jiraData.priority}
+                </span>
+              )}
             </div>
           )}
           {ticket.type === 'local' && ticket.customKey && (
