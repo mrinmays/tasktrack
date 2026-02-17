@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Check,
+  Info,
   Inbox,
   Moon,
   Plug,
@@ -17,7 +18,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useImperativeHandle, useMemo, useState } from "react";
-import type { SectionId } from "@/modules/settings";
+import { GettingStartedDialog, type SectionId } from "@/modules/settings";
 import { useColumnsQuery } from "@/modules/kanban";
 import { useInbox } from "@/modules/inbox/hooks/useInbox";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
@@ -101,6 +102,7 @@ export function InboxSidebar({
     "tasktrack.inbox.sortMode",
     DEFAULT_INBOX_SORT_MODE,
   );
+  const [gettingStartedOpen, setGettingStartedOpen] = useState(false);
   const resolvedSortMode = normalizeInboxSortMode(sortMode);
 
   useImperativeHandle(
@@ -301,6 +303,16 @@ export function InboxSidebar({
                 aria-label="Settings"
               >
                 <Settings className="size-5" aria-hidden />
+              </button>
+            </Tooltip>
+            <Tooltip content="Getting started" side="right">
+              <button
+                type="button"
+                onClick={() => setGettingStartedOpen(true)}
+                className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+                aria-label="Open getting started"
+              >
+                <Info className="size-5" aria-hidden />
               </button>
             </Tooltip>
             <Tooltip content="Toggle theme" side="right">
@@ -751,21 +763,37 @@ export function InboxSidebar({
               <Settings className="size-5 shrink-0" aria-hidden />
               Settings
             </button>
-            <Tooltip content="Toggle theme" side="top">
-              <button
-                type="button"
-                onClick={() => setTheme(getNextTheme(theme))}
-                className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === "light" ? (
-                  <Sun className="size-5" aria-hidden />
-                ) : (
-                  <Moon className="size-5" aria-hidden />
-                )}
-              </button>
-            </Tooltip>
+            <div className="flex items-center gap-1">
+              <Tooltip content="Getting started" side="top">
+                <button
+                  type="button"
+                  onClick={() => setGettingStartedOpen(true)}
+                  className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+                  aria-label="Open getting started"
+                >
+                  <Info className="size-5" aria-hidden />
+                </button>
+              </Tooltip>
+              <Tooltip content="Toggle theme" side="top">
+                <button
+                  type="button"
+                  onClick={() => setTheme(getNextTheme(theme))}
+                  className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "light" ? (
+                    <Sun className="size-5" aria-hidden />
+                  ) : (
+                    <Moon className="size-5" aria-hidden />
+                  )}
+                </button>
+              </Tooltip>
+            </div>
           </div>
+          <GettingStartedDialog
+            open={gettingStartedOpen}
+            onOpenChange={setGettingStartedOpen}
+          />
         </>
       )}
     </div>
