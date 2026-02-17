@@ -1,8 +1,8 @@
 import { Formik, Form, Field, ErrorMessage, useFormikContext } from 'formik';
 import * as Select from '@radix-ui/react-select';
 import * as Yup from 'yup';
-import { Check, ChevronDown, X, ExternalLink } from 'lucide-react';
-import { useMemo } from 'react';
+import { Check, ChevronDown, X, ExternalLink, Copy } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTicketDetail } from '@/hooks/useTicketDetail';
 import { updateTicket } from '@/modules/tickets';
 import { isValidTicketKey } from '@/modules/tickets/utils/validateTicketKey';
@@ -25,6 +25,31 @@ const ticketValidationSchema = Yup.object({
 
 const SIDEBAR_WIDTH = 420;
 
+function CopyButton({ text }: { readonly text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback or ignore
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="p-1 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 rounded transition-colors"
+      aria-label="Copy ticket ID"
+    >
+      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+    </button>
+  );
+}
+
 function TicketDescriptionField({ id }: { readonly id?: string }) {
   const { setFieldValue, values } = useFormikContext<{ description: string }>();
   return (
@@ -45,22 +70,52 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
   const { setFieldValue, setFieldTouched, values, errors, touched } =
     useFormikContext<{ customKey: string }>();
 
-  const currentValue = values.customKey ?? '';
-  const isKnownJiraKey = currentValue !== '' && jiraKeyOptions.includes(currentValue);
-  const isOtherMode = currentValue !== '' && !isKnownJiraKey;
+  const [selectMode, setSelectMode] = useState<'none' | 'existing' | 'other'>('none');
+  const [selectedKey, setSelectedKey] = useState('');
+  const [customKeyInput, setCustomKeyInput] = useState('');
+  const [customKeyError, setCustomKeyError] = useState('');
 
-  let selectValue = SELECT_NONE;
-  if (currentValue !== '') {
-    selectValue = isKnownJiraKey ? currentValue : SELECT_OTHER;
-  }
+  // Sync with formik value on mount or when value changes
+  useMemo(() => {
+    const currentValue = values.customKey ?? '';
+    if (currentValue === '') {
+      setSelectMode('none');
+      setSelectedKey('');
+      setCustomKeyInput('');
+    } else if (jiraKeyOptions.includes(currentValue)) {
+      setSelectMode('existing');
+      setSelectedKey(currentValue);
+      setCustomKeyInput('');
+    } else {
+      setSelectMode('other');
+      setSelectedKey('');
+      setCustomKeyInput(currentValue);
+    }
+  }, [values.customKey, jiraKeyOptions]);
+
+  const resolvedCustomKey =
+    selectMode === 'existing' ? selectedKey
+    : selectMode === 'other' ? customKeyInput.trim().toUpperCase()
+    : '';
+
+  // Sync back to formik
+  useMemo(() => {
+    setFieldValue('customKey', resolvedCustomKey);
+  }, [resolvedCustomKey, setFieldValue]);
 
   const handleSelectChange = (val: string) => {
-    if (val === SELECT_NONE) {
-      setFieldValue('customKey', '');
-    } else if (val === SELECT_OTHER) {
-      setFieldValue('customKey', currentValue && !isKnownJiraKey ? currentValue : '');
+    setCustomKeyError('');
+    if (val === 'none') {
+      setSelectMode('none');
+      setSelectedKey('');
+      setCustomKeyInput('');
+    } else if (val === 'other') {
+      setSelectMode('other');
+      setSelectedKey('');
     } else {
-      setFieldValue('customKey', val);
+      setSelectMode('existing');
+      setSelectedKey(val);
+      setCustomKeyInput('');
     }
   };
 
@@ -71,7 +126,10 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
       <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
         Ticket ID
       </span>
-      <Select.Root value={selectValue} onValueChange={handleSelectChange}>
+      <Select.Root
+        value={selectMode === 'existing' ? selectedKey : selectMode}
+        onValueChange={handleSelectChange}
+      >
         <Select.Trigger
           className="inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
           aria-label="Ticket ID"
@@ -90,7 +148,7 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
           >
             <Select.Viewport className="p-1">
               <Select.Item
-                value={SELECT_NONE}
+                value="none"
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
               >
                 <Select.ItemText>No ticket ID</Select.ItemText>
@@ -123,7 +181,7 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
               )}
               <Select.Separator className="h-px my-1 bg-neutral-200 dark:bg-neutral-700" />
               <Select.Item
-                value={SELECT_OTHER}
+                value="other"
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
               >
                 <Select.ItemText>Other (enter manually)</Select.ItemText>
@@ -135,30 +193,41 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
           </Select.Content>
         </Select.Portal>
       </Select.Root>
-      {(isOtherMode || selectValue === SELECT_OTHER) && (
+      {selectMode === 'other' && (
         <div>
           <input
             type="text"
-            value={currentValue}
-            onChange={(e) => setFieldValue('customKey', e.target.value)}
-            onBlur={() => setFieldTouched('customKey', true)}
+            value={customKeyInput}
+            onChange={(e) => {
+              setCustomKeyInput(e.target.value);
+              if (customKeyError) setCustomKeyError('');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.preventDefault();
+            }}
+            onBlur={() => {
+              const val = customKeyInput.trim().toUpperCase();
+              if (val && !isValidTicketKey(val)) {
+                setCustomKeyError('Must be in format PROJ-123');
+              }
+            }}
             placeholder="e.g. PROJ-123"
             className={`w-full px-3 py-2 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${
-              showError
+              showError || customKeyError
                 ? 'border-red-400 dark:border-red-500'
                 : 'border-neutral-300 dark:border-neutral-600'
             }`}
           />
-          {showError && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.customKey}</p>
+          {(showError || customKeyError) && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">{errors.customKey || customKeyError}</p>
           )}
         </div>
       )}
-      {isKnownJiraKey && (
+      {selectMode === 'existing' && selectedKey && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-neutral-500 dark:text-neutral-400">Currently selected:</span>
           <span className="inline-block text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
-            {currentValue}
+            {selectedKey}
           </span>
         </div>
       )}
@@ -167,7 +236,7 @@ function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly 
 }
 
 export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void }) {
-  const { selectedTicket, closeTicketDetail } = useTicketDetail();
+  const { selectedTicket, closeTicketDetail, openTicketDetail } = useTicketDetail();
   const jiraTicketsQuery = useJiraTicketsQuery();
   const jiraKeyOptions = useMemo(
     () => (jiraTicketsQuery.data ?? []).map((t) => t.jiraData?.jiraKey).filter(Boolean) as string[],
@@ -190,9 +259,16 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
       customKey !== (selectedTicket.customKey ?? undefined);
     if (hasChanges) {
       await updateTicket(selectedTicket.id, { title, description, customKey: customKey ?? '' });
+      // Update context's selectedTicket so Formik resets dirty flag
+      openTicketDetail({
+        ...selectedTicket,
+        title,
+        description: description || null,
+        customKey: customKey || null,
+        updatedAt: Date.now(),
+      });
       onSaved?.();
     }
-    closeTicketDetail();
   };
 
   return (
@@ -243,9 +319,12 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                 <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 min-h-0">
                   {isJira && selectedTicket.jiraData && (
                     <div className="flex items-center gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                      <span className="text-sm px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-md font-medium">
-                        {selectedTicket.jiraData.jiraKey}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-md font-medium">
+                          {selectedTicket.jiraData.jiraKey}
+                        </span>
+                        <CopyButton text={selectedTicket.jiraData.jiraKey} />
+                      </div>
                       {selectedTicket.jiraData.jiraUrl && (
                         <a
                           href={selectedTicket.jiraData.jiraUrl}
@@ -261,9 +340,12 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                   )}
                   {!isJira && selectedTicket.customKey && (
                     <div className="flex items-center gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-                      <span className="text-sm px-2.5 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-md font-medium">
-                        {selectedTicket.customKey}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm px-2.5 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-md font-medium">
+                          {selectedTicket.customKey}
+                        </span>
+                        <CopyButton text={selectedTicket.customKey} />
+                      </div>
                     </div>
                   )}
 
@@ -388,13 +470,17 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                   <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 px-5 py-4 flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={closeTicketDetail}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeTicketDetail();
+                      }}
                       className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
+                      onClick={(e) => e.stopPropagation()}
                       disabled={isSubmitting || !dirty}
                       className="px-4 py-2 text-sm font-medium text-white dark:text-neutral-900 bg-neutral-800 dark:bg-neutral-200 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors"
                     >
