@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Copy, HelpCircle, ExternalLink } from 'lucide-react';
 import {
   initiateOAuthFlow,
@@ -69,6 +69,8 @@ function CopyButton({ value }: CopyButtonProps) {
 }
 
 function JiraSetupGuide() {
+  const callbackUrl = useMemo(() => globalThis.location.origin, []);
+
   return (
     <details className="group rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/40 mb-4">
       <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-medium text-neutral-700 dark:text-neutral-300 select-none list-none [&::-webkit-details-marker]:hidden">
@@ -111,7 +113,7 @@ function JiraSetupGuide() {
               Click <strong>Create</strong> &rarr; <strong>OAuth 2.0 integration</strong>.
             </li>
             <li>
-              Name your app (e.g. &ldquo;TaskTrack&rdquo;) and confirm.
+              Name your app (e.g. &ldquo;tasktrack&rdquo;) and confirm.
             </li>
           </ol>
         </div>
@@ -126,6 +128,19 @@ function JiraSetupGuide() {
               <strong>Add</strong> next to &ldquo;OAuth 2.0 (3LO)&rdquo;, and enter your
               Callback URL.
             </li>
+          </ol>
+          <div className="mt-2">
+            <div className="relative">
+              <input
+                type="text"
+                value={callbackUrl}
+                readOnly
+                className="w-full px-3 py-2 pr-8 border border-neutral-300 dark:border-neutral-600 rounded-md bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 cursor-not-allowed"
+              />
+              <CopyButton value={callbackUrl} />
+            </div>
+          </div>
+          <ol start="2" className="list-decimal list-inside space-y-1 mt-2 ml-1">
             <li>
               Go to <strong>Permissions</strong> &rarr; add <strong>Jira API</strong> &rarr;{' '}
               <strong>Configure</strong>, then enable these scopes:
@@ -137,18 +152,13 @@ function JiraSetupGuide() {
               &mdash; view issues &amp; projects
             </li>
             <li>
-              <code className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">write:jira-work</code>{' '}
-              &mdash; create &amp; manage issues
-            </li>
-            <li>
               <code className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">read:jira-user</code>{' '}
               &mdash; view user profiles
             </li>
-            <li>
-              <code className="text-xs bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded">offline_access</code>{' '}
-              &mdash; stay connected via refresh token
-            </li>
           </ul>
+          <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+            These scopes are available under the Classic scopes section.
+          </p>
         </div>
 
         <div>
