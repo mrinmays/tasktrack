@@ -1,0 +1,164 @@
+import { Maximize2, Pause, Play, RotateCcw } from 'lucide-react';
+import { Tooltip } from '@/components/Tooltip';
+import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
+
+interface PomodoroTimerProps {
+  readonly phase: PomodoroPhase;
+  readonly display: string;
+  readonly running: boolean;
+  readonly completedSessions: number;
+  readonly settings: PomodoroSettings;
+  readonly onStart: () => void;
+  readonly onPause: () => void;
+  readonly onReset: () => void;
+  readonly onSwitchPhase: (phase: PomodoroPhase, autoStart?: boolean) => void;
+  readonly onFullscreen?: () => void;
+}
+
+const PHASE_TABS: Array<{ id: PomodoroPhase; label: string }> = [
+  { id: 'work', label: 'Pomodoro' },
+  { id: 'shortBreak', label: 'Short Break' },
+  { id: 'longBreak', label: 'Long Break' },
+];
+
+const PHASE_COLORS: Record<PomodoroPhase, { bg: string; accent: string }> = {
+  work: {
+    bg: 'bg-yellow-500/10 dark:bg-yellow-500/15',
+    accent: 'text-yellow-600 dark:text-yellow-400',
+  },
+  shortBreak: {
+    bg: 'bg-lime-500/10 dark:bg-lime-500/15',
+    accent: 'text-lime-600 dark:text-lime-400',
+  },
+  longBreak: {
+    bg: 'bg-violet-500/10 dark:bg-violet-500/15',
+    accent: 'text-violet-600 dark:text-violet-400',
+  },
+};
+
+export function PomodoroTimer({
+  phase,
+  display,
+  running,
+  completedSessions,
+  settings,
+  onStart,
+  onPause,
+  onReset,
+  onSwitchPhase,
+  onFullscreen,
+}: PomodoroTimerProps) {
+  const colors = PHASE_COLORS[phase];
+
+  return (
+    <div className={`relative flex flex-col items-center justify-center rounded-xl p-6 ${colors.bg} h-full`}>
+      {onFullscreen && (
+        <Tooltip content="Fullscreen" side="bottom">
+          <button
+            type="button"
+            onClick={onFullscreen}
+            className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
+            aria-label="Enter fullscreen focus mode"
+          >
+            <Maximize2 className="size-3.5" aria-hidden />
+          </button>
+        </Tooltip>
+      )}
+
+      <div className="flex items-center gap-1 mb-4">
+        {PHASE_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onSwitchPhase(tab.id)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              phase === tab.id
+                ? 'bg-white/90 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm'
+                : 'text-neutral-600 dark:text-neutral-400 hover:bg-white/50 dark:hover:bg-neutral-700/50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className={`text-6xl font-bold tabular-nums tracking-tight ${colors.accent} select-none`}>
+        {display}
+      </div>
+
+      <div className="flex items-center gap-3 mt-5">
+        <button
+          type="button"
+          onClick={running ? onPause : onStart}
+          className="flex items-center gap-2 px-8 py-2.5 rounded-lg bg-white/90 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold text-sm shadow-sm hover:bg-white dark:hover:bg-neutral-600 transition-colors"
+        >
+          {running ? (
+            <>
+              <Pause className="size-4" aria-hidden />
+              PAUSE
+            </>
+          ) : (
+            <>
+              <Play className="size-4" aria-hidden />
+              START
+            </>
+          )}
+        </button>
+        <Tooltip content="Reset timer" side="bottom">
+          <button
+            type="button"
+            onClick={onReset}
+            className="p-2 rounded-lg text-neutral-500 dark:text-neutral-400 hover:bg-white/50 dark:hover:bg-neutral-700/50 transition-colors"
+            aria-label="Reset timer"
+          >
+            <RotateCcw className="size-4" aria-hidden />
+          </button>
+        </Tooltip>
+      </div>
+
+      <footer className="mt-4 text-center">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          {phase === 'work' && (
+            <>
+              Session {completedSessions + 1} of {settings.longBreakInterval}
+              <span className="mx-1.5 text-neutral-400 dark:text-neutral-500">·</span>
+              Time to focus!
+            </>
+          )}
+          {phase === 'shortBreak' && (
+            <>
+              {completedSessions > 0 ? (
+                <>
+                  {completedSessions} of {settings.longBreakInterval} done
+                  <span className="mx-1.5 text-neutral-400 dark:text-neutral-500">·</span>
+                </>
+              ) : null}
+              Short break
+            </>
+          )}
+          {phase === 'longBreak' && (
+            <>
+              All {settings.longBreakInterval} complete
+              <span className="mx-1.5 text-neutral-400 dark:text-neutral-500">·</span>
+              Long break
+            </>
+          )}
+        </p>
+      </footer>
+
+      {completedSessions > 0 && (
+        <div className="flex items-center gap-1 mt-2">
+          {Array.from({ length: Math.min(completedSessions, settings.longBreakInterval) }).map(
+            (_, i) => (
+              <div
+                key={`session-${phase}-${i}`}
+                className={`size-2 rounded-full ${colors.accent} opacity-60`}
+                style={{ backgroundColor: 'currentColor' }}
+              />
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

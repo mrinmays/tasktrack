@@ -1,0 +1,138 @@
+import { useCallback, useState } from 'react';
+import { Crosshair } from 'lucide-react';
+import type { MoveTarget } from '@/modules/kanban/components/TicketCard';
+import { FOCUS_ZONE_COLLAPSED_HEIGHT, FOCUS_ZONE_EXPANDED_HEIGHT } from '@/modules/focus/constants';
+import type { useFocusZone } from '@/modules/focus/hooks/useFocusZone';
+import { useDocumentTitle } from '@/modules/focus/hooks/useDocumentTitle';
+import { usePomodoroSettings } from '@/modules/focus/hooks/usePomodoroSettings';
+import { usePomodoroTimer } from '@/modules/focus/hooks/usePomodoroTimer';
+import { FocusFullscreen } from './FocusFullscreen';
+import { FocusTicketCard } from './FocusTicketCard';
+import { PomodoroTimer } from './PomodoroTimer';
+
+interface FocusZoneProps {
+  readonly moveTargets: readonly MoveTarget[];
+  readonly onTicketMove: (ticketId: string, columnId: string) => void;
+  readonly focusedData: ReturnType<typeof useFocusZone>['focusedData'];
+  readonly onEndFocus: () => Promise<void>;
+}
+
+export function FocusZone({
+  moveTargets,
+  onTicketMove,
+  focusedData,
+  onEndFocus,
+}: FocusZoneProps) {
+  const { settings } = usePomodoroSettings();
+  const timer = usePomodoroTimer(settings);
+  const isExpanded = focusedData !== null;
+  useDocumentTitle(timer.display, timer.phase, isExpanded);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const handleDone = useCallback(async () => {
+    if (!focusedData) return;
+    const doneColumn = moveTargets.find(
+      (t) => t.title.toLowerCase() === 'done',
+    );
+    const targetColumnId = doneColumn
+      ? doneColumn.id
+      : moveTargets.at(-1)?.id;
+
+    if (targetColumnId) {
+      onTicketMove(focusedData.ticket.id, targetColumnId);
+    }
+    timer.resetAll();
+    setIsFullscreen(false);
+    await onEndFocus();
+  }, [focusedData, moveTargets, onTicketMove, timer, onEndFocus]);
+
+  const handleDismiss = useCallback(async () => {
+    if (!focusedData) return;
+    onTicketMove(focusedData.ticket.id, focusedData.originalColumnId);
+    timer.resetAll();
+    setIsFullscreen(false);
+    await onEndFocus();
+  }, [focusedData, onTicketMove, timer, onEndFocus]);
+
+  const handleMoveTo = useCallback(async (columnId: string) => {
+    if (!focusedData) return;
+    onTicketMove(focusedData.ticket.id, columnId);
+    timer.resetAll();
+    setIsFullscreen(false);
+    await onEndFocus();
+  }, [focusedData, onTicketMove, timer, onEndFocus]);
+
+  const handleExitFullscreen = useCallback(() => {
+    setIsFullscreen(false);
+  }, []);
+
+  return (
+    <>
+      <div
+        className="shrink-0 overflow-hidden transition-[height] duration-300 ease-in-out bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700"
+        style={{ height: isExpanded ? FOCUS_ZONE_EXPANDED_HEIGHT : FOCUS_ZONE_COLLAPSED_HEIGHT }}
+      >
+        {isExpanded ? (
+          <div className="flex h-full gap-6 px-6 py-4 animate-in fade-in duration-200">
+            <div className="flex-[3] min-w-0 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-5 border border-neutral-200 dark:border-neutral-700">
+              <FocusTicketCard
+                ticket={focusedData.ticket}
+                originalColumnId={focusedData.originalColumnId}
+                moveTargets={moveTargets}
+                onDone={handleDone}
+                onDismiss={handleDismiss}
+                onMoveTo={handleMoveTo}
+              />
+            </div>
+            <div className="flex-[2] min-w-0">
+              <PomodoroTimer
+                phase={timer.phase}
+                display={timer.display}
+                running={timer.running}
+                completedSessions={timer.completedSessions}
+                settings={settings}
+                onStart={timer.start}
+                onPause={timer.pause}
+                onReset={timer.reset}
+                onSwitchPhase={timer.switchPhase}
+                onFullscreen={() => setIsFullscreen(true)}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center h-full px-6 gap-3">
+            <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
+              <Crosshair className="size-4" aria-hidden />
+              <span className="text-xs font-medium uppercase tracking-wide">Focus Zone</span>
+            </div>
+            <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+              click &quot;Focus&quot; on any ticket in board to begin
+            </span>
+          </div>
+        )}
+      </div>
+
+      {isFullscreen && focusedData && (
+        <FocusFullscreen
+          ticket={focusedData.ticket}
+          originalColumnId={focusedData.originalColumnId}
+          moveTargets={moveTargets}
+          onDone={handleDone}
+          onDismiss={handleDismiss}
+          onMoveTo={handleMoveTo}
+          phase={timer.phase}
+          display={timer.display}
+          running={timer.running}
+          completedSessions={timer.completedSessions}
+          settings={settings}
+          onStart={timer.start}
+          onPause={timer.pause}
+          onReset={timer.reset}
+          onSwitchPhase={timer.switchPhase}
+          onExit={handleExitFullscreen}
+        />
+      )}
+    </>
+  );
+}

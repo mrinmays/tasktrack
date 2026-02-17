@@ -1,0 +1,527 @@
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import * as Select from '@radix-ui/react-select';
+import { ChevronDown, ChevronLeft, Check, Inbox, Moon, Plug, RefreshCw, Search, Settings, Sun } from 'lucide-react';
+import { useImperativeHandle, useMemo, useState } from 'react';
+import type { SectionId } from '@/modules/settings';
+import { useColumnsQuery } from '@/modules/kanban';
+import { useInbox } from '@/modules/inbox/hooks/useInbox';
+import { isValidTicketKey } from '@/modules/tickets/utils/validateTicketKey';
+import { TicketCard } from '@/modules/kanban/components/TicketCard';
+import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
+import { Tooltip } from '@/components/Tooltip';
+import { TicketDescriptionEditor } from '@/components/TicketDescriptionEditor';
+import { useTheme } from '@/hooks/useTheme';
+import { useToast } from '@/hooks/useToast';
+
+const SIDEBAR_WIDTH = 320;
+const SIDEBAR_COLLAPSED_WIDTH = 48;
+
+export interface InboxSidebarHandle {
+  openAddTicketForm: () => void;
+}
+
+interface InboxSidebarProps {
+  readonly isOpen: boolean;
+  readonly onOpen: () => void;
+  readonly onClose: () => void;
+  readonly onSettingsOpen: (section?: SectionId) => void;
+  readonly onSearchOpen: () => void;
+  readonly imperativeRef?: React.Ref<InboxSidebarHandle>;
+}
+
+function getNextTheme(current: 'light' | 'dark'): 'light' | 'dark' {
+  return current === 'light' ? 'dark' : 'light';
+}
+
+export function InboxSidebar({ isOpen, onOpen, onClose, onSettingsOpen, onSearchOpen, imperativeRef }: InboxSidebarProps) {
+  const { theme, setTheme } = useTheme();
+  const { setNodeRef: setInboxDropRef, isOver } = useDroppable({
+    id: INBOX_COLUMN_ID,
+  });
+  const { showToast } = useToast();
+  const columnsQuery = useColumnsQuery();
+  const columns = columnsQuery.data ?? [];
+  const {
+    inboxTickets,
+    loading,
+    jiraConnected,
+    hasJiraTicketsInDb,
+    jiraTickets,
+    syncing,
+    adding,
+    moveTicketToColumn,
+    handleTicketUpdate,
+    handleTicketDelete,
+    deletingTicket,
+    addTicketToInbox,
+    syncFromJira,
+    refresh,
+  } = useInbox();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addTitle, setAddTitle] = useState('');
+  const [addDescription, setAddDescription] = useState('');
+  const [ticketKeyMode, setTicketKeyMode] = useState<'none' | 'existing' | 'other'>('none');
+  const [selectedKey, setSelectedKey] = useState('');
+  const [customKeyInput, setCustomKeyInput] = useState('');
+  const [customKeyError, setCustomKeyError] = useState('');
+
+  useImperativeHandle(imperativeRef, () => ({
+    openAddTicketForm: () => {
+      if (!isOpen) onOpen();
+      setShowAddForm(true);
+    },
+  }), [isOpen, onOpen]);
+
+  const jiraKeyOptions = useMemo(
+    () => jiraTickets.map((t) => t.jiraData?.jiraKey).filter(Boolean) as string[],
+    [jiraTickets],
+  );
+
+  const handleSyncFromJira = () => {
+    syncFromJira(({ created, updated }) => {
+      const parts: string[] = [];
+      if (created.length > 0) parts.push(`${created.length} new`);
+      if (updated.length > 0) parts.push(`${updated.length} updated`);
+      showToast(
+        parts.length > 0
+          ? `Synced from JIRA: ${parts.join(', ')}`
+          : 'JIRA sync complete — everything up to date',
+      );
+    });
+  };
+
+  const resolvedCustomKey =
+    ticketKeyMode === 'existing' ? selectedKey
+    : ticketKeyMode === 'other' ? customKeyInput.trim().toUpperCase()
+    : undefined;
+
+  const handleAddTicket = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const title = addTitle.trim();
+    if (!title) return;
+
+    if (ticketKeyMode === 'other') {
+      const key = customKeyInput.trim().toUpperCase();
+      if (!key) {
+        setCustomKeyError('Ticket ID is required when "Other" is selected');
+        return;
+      }
+      if (!isValidTicketKey(key)) {
+        setCustomKeyError('Must be in format PROJ-123');
+        return;
+      }
+    }
+
+    const finalKey = resolvedCustomKey && isValidTicketKey(resolvedCustomKey) ? resolvedCustomKey : undefined;
+
+    addTicketToInbox(title, addDescription.trim() || undefined, finalKey, () => {
+      setAddTitle('');
+      setAddDescription('');
+      setTicketKeyMode('none');
+      setSelectedKey('');
+      setCustomKeyInput('');
+      setCustomKeyError('');
+      setShowAddForm(false);
+    });
+  };
+
+  let inboxContent: React.ReactNode;
+  if (loading) {
+    inboxContent = <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">Loading...</div>;
+  } else if (inboxTickets.length === 0) {
+    inboxContent = isOver ? (
+      <div className="flex flex-col items-center justify-center min-h-[8rem] gap-2 text-sm text-blue-600 dark:text-blue-400 transition-colors">
+        <span className="font-medium">Drop here</span>
+        <span className="text-xs">Release to move to inbox</span>
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+        <Inbox className="size-8 text-neutral-300 dark:text-neutral-600" aria-hidden />
+        <p className="text-sm text-neutral-400 dark:text-neutral-500">Your inbox is empty</p>
+        <p className="text-xs text-neutral-400/70 dark:text-neutral-500/70">Add a ticket above, or drag one here to shelve it for later</p>
+      </div>
+    );
+  } else {
+    inboxContent = (
+      <SortableContext
+        items={inboxTickets.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-2">
+          {inboxTickets.map((ticket) => (
+            <TicketCard
+              key={ticket.id}
+              ticket={ticket}
+              moveTargets={columns}
+              onMove={moveTicketToColumn}
+              onDelete={handleTicketDelete}
+              deleting={deletingTicket}
+              onTicketUpdate={handleTicketUpdate}
+              onRefresh={refresh}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    );
+  }
+
+  return (
+    <div
+      ref={setInboxDropRef}
+      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 flex flex-col border-r border-neutral-200 dark:border-neutral-700 transition-[width,colors] duration-200 ${
+        !isOpen && isOver
+          ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30'
+          : ''
+      }`}
+      style={{ width: isOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH }}
+    >
+      {!isOpen ? (
+        <>
+          <div className="flex items-center justify-center shrink-0 border-b border-neutral-200 dark:border-neutral-700" style={{ height: 48 }}>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-lg font-semibold text-black bg-[#FDFC74] px-2 py-1 rounded-md hover:opacity-90 transition-opacity"
+            aria-label="Open inbox"
+          >
+            tt
+          </button>
+          </div>
+          <div className="flex flex-col items-center gap-3 pt-3 shrink-0">
+          <Tooltip content="Search (⌘K)" side="right">
+            <button
+              type="button"
+              onClick={onSearchOpen}
+              className="p-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
+              aria-label="Search tickets"
+            >
+              <Search className="size-5" aria-hidden />
+            </button>
+          </Tooltip>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className={`flex-1 min-h-0 w-full flex items-center justify-center cursor-pointer transition-colors rounded-md mx-auto ${
+            isOver
+              ? 'bg-blue-100/80 dark:bg-blue-900/40'
+              : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 focus-visible:ring-inset`}
+          aria-label="Open inbox"
+        >
+          {isOver ? (
+            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 [writing-mode:vertical-rl] rotate-180 select-none tracking-widest uppercase">
+              Drop here
+            </span>
+          ) : (
+            <span className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 [writing-mode:vertical-rl] rotate-180 select-none tracking-widest uppercase">
+              Open Inbox
+            </span>
+          )}
+        </button>
+        <div className="shrink-0 border-t border-neutral-100 dark:border-neutral-800 p-2 flex flex-col items-center gap-1">
+          <Tooltip content="Settings" side="right">
+            <button
+              type="button"
+              onClick={() => onSettingsOpen()}
+              className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+              aria-label="Settings"
+            >
+              <Settings className="size-5" aria-hidden />
+            </button>
+          </Tooltip>
+          <Tooltip content="Toggle theme" side="right">
+            <button
+              type="button"
+              onClick={() => setTheme(getNextTheme(theme))}
+              className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? <Sun className="size-5" aria-hidden /> : <Moon className="size-5" aria-hidden />}
+            </button>
+          </Tooltip>
+        </div>
+        </>
+      ) : (
+        <>
+      <div className="flex items-center justify-between px-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0" style={{ height: 48 }}>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-lg font-semibold text-black bg-[#FDFC74] px-2 py-1 rounded-md hover:opacity-90 transition-opacity"
+          aria-label="Collapse sidebar"
+        >
+          tasktrack
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onSearchOpen}
+            className="flex items-center gap-1.5 h-7 px-2 text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+            aria-label="Search tickets"
+          >
+            <Search className="size-3.5" aria-hidden />
+            <span className="text-neutral-400 dark:text-neutral-500">Search</span>
+            <kbd className="ml-1 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
+              ⌘K
+            </kbd>
+          </button>
+          <Tooltip content="Collapse sidebar" side="bottom">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+              aria-label="Collapse sidebar"
+            >
+              <ChevronLeft className="size-5" aria-hidden />
+            </button>
+          </Tooltip>
+        </div>
+      </div>
+      <div className="px-4 pt-2 pb-1 shrink-0 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Inbox</h2>
+        {!jiraConnected ? (
+          <button
+            type="button"
+            onClick={() => onSettingsOpen('jira')}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+            aria-label="Connect JIRA"
+          >
+            <Plug className="size-3.5" aria-hidden />
+            Connect JIRA
+          </button>
+        ) : !hasJiraTicketsInDb ? (
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={handleSyncFromJira}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors disabled:opacity-50"
+            aria-label="Fetch JIRA tickets"
+          >
+            <RefreshCw className={`size-3.5 ${syncing ? 'animate-spin' : ''}`} aria-hidden />
+            {syncing ? 'Fetching…' : 'Fetch JIRA tickets'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={handleSyncFromJira}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors disabled:opacity-50"
+            aria-label="Sync from JIRA"
+          >
+            <RefreshCw className={`size-3.5 ${syncing ? 'animate-spin' : ''}`} aria-hidden />
+            {syncing ? 'Syncing…' : 'Sync JIRA'}
+          </button>
+        )}
+      </div>
+
+      <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+        {showAddForm ? (
+          <form onSubmit={handleAddTicket} className="space-y-2">
+            <input
+              type="text"
+              value={addTitle}
+              onChange={(e) => setAddTitle(e.target.value)}
+              placeholder="Ticket title"
+              autoFocus
+              className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500"
+            />
+            <TicketDescriptionEditor
+              value={addDescription}
+              onChange={setAddDescription}
+              placeholder="Description (optional)"
+              minHeight="4rem"
+            />
+            <div className="space-y-1.5">
+              <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                Ticket ID (optional)
+              </span>
+              <Select.Root
+                value={ticketKeyMode === 'existing' ? selectedKey : ticketKeyMode}
+                onValueChange={(val) => {
+                  setCustomKeyError('');
+                  if (val === 'none') {
+                    setTicketKeyMode('none');
+                    setSelectedKey('');
+                    setCustomKeyInput('');
+                  } else if (val === 'other') {
+                    setTicketKeyMode('other');
+                    setSelectedKey('');
+                  } else {
+                    setTicketKeyMode('existing');
+                    setSelectedKey(val);
+                    setCustomKeyInput('');
+                  }
+                }}
+              >
+                <Select.Trigger
+                  className="inline-flex w-full items-center justify-between px-3 py-1.5 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
+                  aria-label="Ticket ID"
+                >
+                  <Select.Value placeholder="No ticket ID" />
+                  <Select.Icon>
+                    <ChevronDown className="size-3.5 text-neutral-500 dark:text-neutral-400" aria-hidden />
+                  </Select.Icon>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Content
+                    className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
+                    position="popper"
+                    sideOffset={4}
+                    align="start"
+                  >
+                    <Select.Viewport className="p-1">
+                      <Select.Item
+                        value="none"
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                      >
+                        <Select.ItemText>No ticket ID</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-3.5" aria-hidden />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                      {jiraKeyOptions.length > 0 && (
+                        <Select.Group>
+                          <Select.Label className="px-3 py-1 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
+                            Synced JIRA tickets
+                          </Select.Label>
+                          {jiraKeyOptions.map((key) => (
+                            <Select.Item
+                              key={key}
+                              value={key}
+                              className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                            >
+                              <Select.ItemText>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">{key}</span>
+                                </span>
+                              </Select.ItemText>
+                              <Select.ItemIndicator className="ml-auto">
+                                <Check className="size-3.5" aria-hidden />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
+                      )}
+                      <Select.Separator className="h-px my-1 bg-neutral-200 dark:bg-neutral-700" />
+                      <Select.Item
+                        value="other"
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 rounded cursor-pointer outline-none data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                      >
+                        <Select.ItemText>Other (enter manually)</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-3.5" aria-hidden />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select.Portal>
+              </Select.Root>
+              {ticketKeyMode === 'other' && (
+                <div>
+                  <input
+                    type="text"
+                    value={customKeyInput}
+                    onChange={(e) => {
+                      setCustomKeyInput(e.target.value);
+                      if (customKeyError) setCustomKeyError('');
+                    }}
+                    onBlur={() => {
+                      const val = customKeyInput.trim().toUpperCase();
+                      if (val && !isValidTicketKey(val)) {
+                        setCustomKeyError('Must be in format PROJ-123');
+                      }
+                    }}
+                    placeholder="e.g. PROJ-123"
+                    className={`w-full px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${
+                      customKeyError
+                        ? 'border-red-400 dark:border-red-500'
+                        : 'border-neutral-300 dark:border-neutral-600'
+                    }`}
+                  />
+                  {customKeyError && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{customKeyError}</p>
+                  )}
+                </div>
+              )}
+              {ticketKeyMode === 'existing' && selectedKey && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">Currently selected:</span>
+                  <span className="inline-block text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
+                    {selectedKey}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={adding || !addTitle.trim()}
+                className="px-3 py-1.5 text-sm font-medium bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50"
+              >
+                {adding ? 'Adding…' : 'Add'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddForm(false);
+                  setAddTitle('');
+                  setAddDescription('');
+                  setTicketKeyMode('none');
+                  setSelectedKey('');
+                  setCustomKeyInput('');
+                  setCustomKeyError('');
+                }}
+                className="px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowAddForm(true)}
+            className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+          >
+            + Add a custom ticket
+          </button>
+        )}
+      </div>
+
+      <div
+        className={`mx-3 my-2 flex-1 overflow-y-auto min-h-[8rem] rounded-md border-2 border-dashed p-4 transition-colors duration-150 ${
+          isOver
+            ? 'border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
+            : 'border-neutral-200/60 dark:border-neutral-600/60'
+        }`}
+      >
+        {inboxContent}
+      </div>
+      <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 p-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => onSettingsOpen()}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
+          aria-label="Settings"
+        >
+          <Settings className="size-5 shrink-0" aria-hidden />
+          Settings
+        </button>
+        <Tooltip content="Toggle theme" side="top">
+          <button
+            type="button"
+            onClick={() => setTheme(getNextTheme(theme))}
+            className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <Sun className="size-5" aria-hidden /> : <Moon className="size-5" aria-hidden />}
+          </button>
+        </Tooltip>
+      </div>
+        </>
+      )}
+    </div>
+  );
+}
