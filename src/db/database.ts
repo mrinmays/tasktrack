@@ -4,7 +4,7 @@ export interface Ticket {
   id: string;
   title: string;
   description?: string;
-  type: 'jira' | 'custom';
+  type: 'jira' | 'local';
   columnId: string;
   order: number;
   jiraData?: {
@@ -88,6 +88,10 @@ export class TaskTrackDatabase extends Dexie {
       tickets: 'id, columnId, type, createdAt, order, [columnId+order]',
       columns: 'id, order',
       settings: 'key',
+    });
+    this.version(4).upgrade(async (transaction) => {
+      const ticketsTable = transaction.table<Ticket, string>('tickets');
+      await ticketsTable.where('type').equals('custom').modify({ type: 'local' });
     });
   }
 }

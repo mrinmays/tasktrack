@@ -485,7 +485,7 @@ export function InboxSidebar({ isOpen, onOpen, onClose, onSettingsOpen, onSearch
             onClick={() => setShowAddForm(true)}
             className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
           >
-            + Add a custom ticket
+            + Add a local ticket
           </button>
         )}
       </div>

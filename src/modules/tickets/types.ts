@@ -1,6 +1,6 @@
 import type { Ticket } from '@/db/database';
 
-export type TicketType = 'jira' | 'custom';
+export type TicketType = 'jira' | 'local';
 
 export interface JiraTicket extends Ticket {
   type: 'jira';
@@ -14,8 +14,8 @@ export interface JiraTicket extends Ticket {
   };
 }
 
-export interface CustomTicket extends Ticket {
-  type: 'custom';
+export interface LocalTicket extends Ticket {
+  type: 'local';
   jiraData?: never;
   customKey?: string;
 }

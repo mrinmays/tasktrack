@@ -58,7 +58,7 @@ export function useInbox() {
       {
         title,
         description,
-        type: 'custom',
+        type: 'local',
         columnId: INBOX_COLUMN_ID,
         customKey,
       },

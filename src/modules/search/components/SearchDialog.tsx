@@ -263,7 +263,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                             {ticket.jiraData.jiraKey}
                           </span>
                         )}
-                        {ticket.type === 'custom' && ticket.customKey && (
+                        {ticket.type === 'local' && ticket.customKey && (
                           <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-medium text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/40 rounded">
                             {ticket.customKey}
                           </span>

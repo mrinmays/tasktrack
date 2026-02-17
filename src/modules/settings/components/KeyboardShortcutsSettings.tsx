@@ -26,7 +26,7 @@ const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
     heading: 'Actions',
     shortcuts: [
       { label: 'Sync JIRA', keys: [MOD, 'Shift', 'J'] },
-      { label: 'New custom ticket', keys: [MOD, 'Shift', 'C'] },
+      { label: 'New local ticket', keys: [MOD, 'Shift', 'C'] },
     ],
   },
 ];
