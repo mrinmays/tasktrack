@@ -15,8 +15,8 @@ import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
 import { getAllColumns, getColumn, reorderColumns } from '@/modules/kanban';
 import { getTicket, moveTicket, reorderTicketInColumn } from '@/modules/tickets';
 import type { Column } from '@/modules/kanban';
-import { TicketCard } from '@/modules/kanban/components/TicketCard';
 import { getTicketById } from '@/contexts/ticketRegistry';
+import { stripHtml } from '@/utils/sanitizeHtml';
 
 interface DndProviderProps {
   readonly children: React.ReactNode;
@@ -173,8 +173,17 @@ export function DndProvider({ children }: DndProviderProps) {
   let overlayContent: React.ReactNode = null;
   if (activeTicket) {
     overlayContent = (
-      <div className="rotate-3 opacity-90">
-        <TicketCard ticket={activeTicket} />
+      <div className="rotate-3 opacity-90 w-72">
+        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3">
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-4">
+            {activeTicket.title}
+          </p>
+          {activeTicket.description && typeof activeTicket.description === 'string' && (
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
+              {stripHtml(activeTicket.description)}
+            </p>
+          )}
+        </div>
       </div>
     );
   } else if (activeColumn) {
