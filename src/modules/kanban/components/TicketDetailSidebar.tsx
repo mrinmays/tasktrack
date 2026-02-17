@@ -63,11 +63,8 @@ function TicketDescriptionField({ id }: { readonly id?: string }) {
   );
 }
 
-const SELECT_NONE = '__none__';
-const SELECT_OTHER = '__other__';
-
 function TicketKeyField({ jiraKeyOptions }: { readonly jiraKeyOptions: readonly string[] }) {
-  const { setFieldValue, setFieldTouched, values, errors, touched } =
+  const { setFieldValue, values, errors, touched } =
     useFormikContext<{ customKey: string }>();
 
   const [selectMode, setSelectMode] = useState<'none' | 'existing' | 'other'>('none');
@@ -263,8 +260,8 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
       openTicketDetail({
         ...selectedTicket,
         title,
-        description: description || null,
-        customKey: customKey || null,
+        description: description || undefined,
+        customKey: customKey || undefined,
         updatedAt: Date.now(),
       });
       onSaved?.();
