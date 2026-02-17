@@ -277,10 +277,10 @@ export function TicketDetailSidebar({ onSaved }: { readonly onSaved?: () => void
                     {isEditable ? (
                       <>
                         <Field
+                          as="textarea"
                           id="ticket-title"
                           name="title"
-                          type="text"
-                          className="w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+                          className="w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none"
                         />
                         <ErrorMessage
                           name="title"

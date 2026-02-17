@@ -27,7 +27,7 @@ export function FocusTicketCard({
   return (
     <div className="flex flex-col h-full justify-between">
       <div className="shrink-0">
-        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2">
+        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-4">
           {ticket.title}
         </h3>
         {ticket.type === 'jira' && ticket.jiraData && (

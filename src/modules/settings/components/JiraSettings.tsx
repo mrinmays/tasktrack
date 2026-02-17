@@ -140,7 +140,7 @@ function JiraSetupGuide() {
               <CopyButton value={callbackUrl} />
             </div>
           </div>
-          <ol start="2" className="list-decimal list-inside space-y-1 mt-2 ml-1">
+          <ol start={2} className="list-decimal list-inside space-y-1 mt-2 ml-1">
             <li>
               Go to <strong>Permissions</strong> &rarr; add <strong>Jira API</strong> &rarr;{' '}
               <strong>Configure</strong>, then enable these scopes:

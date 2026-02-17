@@ -319,13 +319,13 @@ export function InboxSidebar({ isOpen, onOpen, onClose, onSettingsOpen, onSearch
       <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
         {showAddForm ? (
           <form onSubmit={handleAddTicket} className="space-y-2">
-            <input
-              type="text"
+            <textarea
               value={addTitle}
               onChange={(e) => setAddTitle(e.target.value)}
               placeholder="Ticket title"
               autoFocus
-              className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500"
+              rows={1}
+              className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 resize-none"
             />
             <TicketDescriptionEditor
               value={addDescription}

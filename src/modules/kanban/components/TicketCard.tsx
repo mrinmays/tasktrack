@@ -116,7 +116,7 @@ export function TicketCard({
         >
           <button
             type="button"
-            className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate text-left hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors w-full"
+            className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 text-left hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors w-full line-clamp-4"
             onClick={(e) => {
               e.stopPropagation();
               openTicketDetail(ticket);
@@ -269,11 +269,11 @@ export function TicketCard({
             >
               <label className="block">
                 <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Title</span>
-                <input
-                  type="text"
+                <textarea
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="mt-1 w-full rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+                  rows={1}
+                  className="mt-1 w-full rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 px-3 py-2 text-sm focus:border-neutral-400 dark:focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 resize-none"
                   required
                 />
               </label>
