@@ -40,7 +40,7 @@ function descriptionToHtml(issue: JiraIssue): string | undefined {
   return undefined;
 }
 
-async function removeStaleJiraTickets(freshJiraKeys: Set<string>): Promise<void> {
+async function removeStaleJiraTickets(freshJiraKeys: Set<string>): Promise<string[]> {
   const existingJiraTickets = await getJiraTickets();
   const staleIds = existingJiraTickets
     .filter((t) => t.jiraData?.jiraKey && !freshJiraKeys.has(t.jiraData.jiraKey))
@@ -48,11 +48,13 @@ async function removeStaleJiraTickets(freshJiraKeys: Set<string>): Promise<void>
   if (staleIds.length > 0) {
     await deleteTickets(staleIds);
   }
+  return staleIds;
 }
 
 export interface JiraSyncResult {
   created: Ticket[];
   updated: Ticket[];
+  deleted: string[];
 }
 
 async function issuesToTickets(
@@ -60,7 +62,7 @@ async function issuesToTickets(
   config: AtlassianConfig
 ): Promise<JiraSyncResult> {
   const freshJiraKeys = new Set(issues.map((i) => i.key));
-  await removeStaleJiraTickets(freshJiraKeys);
+  const deleted = await removeStaleJiraTickets(freshJiraKeys);
 
   const allTickets = await getAllTickets();
   const existingByJiraKey = new Map<string, Ticket>();
@@ -113,7 +115,7 @@ async function issuesToTickets(
     }
   }
 
-  return { created, updated };
+  return { created, updated, deleted };
 }
 
 export interface JiraIssue {

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { db, type Ticket } from '@/db/database';
 import { getTicket } from '@/modules/tickets/services/ticket.service';
+import { subscribeToTicketsRemoved } from '@/utils/ticketsRemoved';
 import { SETTING_KEYS } from '@/modules/focus/constants';
 import type { FocusedTicketData } from '@/modules/focus/types';
 
@@ -57,6 +58,23 @@ export function useFocusZone() {
   const endFocus = useCallback(async () => {
     await clearPersistedFocus();
     setFocusedData(null);
+  }, []);
+
+  const endFocusRef = useRef(endFocus);
+  const focusedDataRef = useRef(focusedData);
+
+  useEffect(() => {
+    endFocusRef.current = endFocus;
+    focusedDataRef.current = focusedData;
+  }, [endFocus, focusedData]);
+
+  useEffect(() => {
+    return subscribeToTicketsRemoved((ticketIds) => {
+      const focused = focusedDataRef.current;
+      if (focused && ticketIds.includes(focused.ticket.id)) {
+        void endFocusRef.current();
+      }
+    });
   }, []);
 
   const refreshFocusedTicket = useCallback(async () => {

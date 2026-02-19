@@ -1,6 +1,7 @@
 import type { Ticket } from '@/db/database';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queryKeys';
+import { dispatchTicketsRemoved } from '@/utils/ticketsRemoved';
 import {
   createTicket,
   deleteTicket,
@@ -107,10 +108,11 @@ export function useDeleteTicketMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (ticketId: string) => deleteTicket(ticketId),
-    onSuccess: () => {
+    onSuccess: (_, ticketId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.jira });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.inbox });
+      dispatchTicketsRemoved([ticketId]);
     },
   });
 }
