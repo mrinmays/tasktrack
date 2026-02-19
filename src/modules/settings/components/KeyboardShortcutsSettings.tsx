@@ -1,6 +1,4 @@
-const isMac = navigator.userAgent.includes('Mac');
-
-const MOD = isMac ? '⌘' : 'Ctrl';
+import { MOD_KEY } from '@/modules/settings/constants/shortcuts.constants';
 
 interface ShortcutEntry {
   readonly label: string;
@@ -16,17 +14,17 @@ const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
   {
     heading: 'General',
     shortcuts: [
-      { label: 'Search', keys: [MOD, 'K'] },
-      { label: 'Open Settings', keys: [MOD, '.'] },
-      { label: 'Toggle sidebar', keys: [MOD, '\\'] },
-      { label: 'Toggle theme', keys: [MOD, 'Shift', 'M'] },
+      { label: 'Search', keys: [MOD_KEY, 'K'] },
+      { label: 'Open Settings', keys: [MOD_KEY, '.'] },
+      { label: 'Toggle sidebar', keys: [MOD_KEY, '\\'] },
+      { label: 'Toggle theme', keys: [MOD_KEY, 'Shift', 'M'] },
     ],
   },
   {
     heading: 'Actions',
     shortcuts: [
-      { label: 'Sync JIRA', keys: [MOD, 'Shift', 'J'] },
-      { label: 'New local ticket', keys: [MOD, 'Shift', 'C'] },
+      { label: 'Sync JIRA', keys: [MOD_KEY, 'Shift', 'J'] },
+      { label: 'New local ticket', keys: [MOD_KEY, 'Shift', 'C'] },
     ],
   },
 ];

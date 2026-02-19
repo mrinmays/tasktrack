@@ -1,3 +1,4 @@
+export * from './constants/shortcuts.constants';
 export * from './components/SettingsDialog';
 export * from './components/GettingStartedDialog';
 export * from './components/JiraSettings';

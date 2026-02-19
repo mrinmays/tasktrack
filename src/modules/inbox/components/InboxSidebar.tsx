@@ -18,7 +18,11 @@ import {
   Sun,
 } from "lucide-react";
 import { useImperativeHandle, useMemo, useState } from "react";
-import { GettingStartedDialog, type SectionId } from "@/modules/settings";
+import {
+  GettingStartedDialog,
+  SHORTCUT_DISPLAY,
+  type SectionId,
+} from "@/modules/settings";
 import { useColumnsQuery } from "@/modules/kanban";
 import { useInbox } from "@/modules/inbox/hooks/useInbox";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
@@ -263,7 +267,7 @@ export function InboxSidebar({
             </button>
           </div>
           <div className="flex flex-col items-center gap-3 pt-3 shrink-0">
-            <Tooltip content="Search (⌘K)" side="right">
+            <Tooltip content={`Search (${SHORTCUT_DISPLAY.search})`} side="right">
               <button
                 type="button"
                 onClick={onSearchOpen}
@@ -295,7 +299,7 @@ export function InboxSidebar({
             )}
           </button>
           <div className="shrink-0 border-t border-neutral-100 dark:border-neutral-800 p-2 flex flex-col items-center gap-1">
-            <Tooltip content="Settings" side="right">
+            <Tooltip content={`Settings (${SHORTCUT_DISPLAY.settings})`} side="right">
               <button
                 type="button"
                 onClick={() => onSettingsOpen()}
@@ -315,7 +319,7 @@ export function InboxSidebar({
                 <Info className="size-5" aria-hidden />
               </button>
             </Tooltip>
-            <Tooltip content="Toggle theme" side="right">
+            <Tooltip content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`} side="right">
               <button
                 type="button"
                 onClick={() => setTheme(getNextTheme(theme))}
@@ -357,10 +361,10 @@ export function InboxSidebar({
                   Search
                 </span>
                 <kbd className="ml-1 px-1 py-0.5 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded">
-                  ⌘K
+                  {SHORTCUT_DISPLAY.search}
                 </kbd>
               </button>
-              <Tooltip content="Collapse sidebar" side="bottom">
+              <Tooltip content={`Collapse sidebar (${SHORTCUT_DISPLAY.toggleSidebar})`} side="bottom">
                 <button
                   type="button"
                   onClick={onClose}
@@ -388,33 +392,37 @@ export function InboxSidebar({
                   Connect JIRA
                 </button>
               ) : !hasJiraTicketsInDb ? (
-                <button
-                  type="button"
-                  disabled={syncing}
-                  onClick={handleSyncFromJira}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                  aria-label="Fetch JIRA tickets"
-                >
-                  <RefreshCw
-                    className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                    aria-hidden
-                  />
-                  {syncing ? "Fetching…" : "Fetch JIRA tickets"}
-                </button>
+                <Tooltip content={`Fetch JIRA tickets (${SHORTCUT_DISPLAY.syncJira})`} side="bottom">
+                  <button
+                    type="button"
+                    disabled={syncing}
+                    onClick={handleSyncFromJira}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                    aria-label="Fetch JIRA tickets"
+                  >
+                    <RefreshCw
+                      className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
+                      aria-hidden
+                    />
+                    {syncing ? "Fetching…" : "Fetch JIRA tickets"}
+                  </button>
+                </Tooltip>
               ) : (
-                <button
-                  type="button"
-                  disabled={syncing}
-                  onClick={handleSyncFromJira}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
-                  aria-label="Sync from JIRA"
-                >
-                  <RefreshCw
-                    className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
-                    aria-hidden
-                  />
-                  {syncing ? "Syncing…" : "Sync JIRA"}
-                </button>
+                <Tooltip content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`} side="bottom">
+                  <button
+                    type="button"
+                    disabled={syncing}
+                    onClick={handleSyncFromJira}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
+                    aria-label="Sync from JIRA"
+                  >
+                    <RefreshCw
+                      className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
+                      aria-hidden
+                    />
+                    {syncing ? "Syncing…" : "Sync JIRA"}
+                  </button>
+                </Tooltip>
               )}
             </div>
 
@@ -734,13 +742,15 @@ export function InboxSidebar({
                 </div>
               </form>
             ) : (
-              <button
-                type="button"
-                onClick={() => setShowAddForm(true)}
-                className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
-              >
-                + Add a local ticket
-              </button>
+              <Tooltip content={`Add a local ticket (${SHORTCUT_DISPLAY.newLocalTicket})`} side="top">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(true)}
+                  className="w-full px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+                >
+                  + Add a local ticket
+                </button>
+              </Tooltip>
             )}
           </div>
 
@@ -754,15 +764,17 @@ export function InboxSidebar({
             {inboxContent}
           </div>
           <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 p-3 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => onSettingsOpen()}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
-              aria-label="Settings"
-            >
-              <Settings2 className="size-5 shrink-0" aria-hidden />
-              Settings
-            </button>
+            <Tooltip content={`Settings (${SHORTCUT_DISPLAY.settings})`} side="top">
+              <button
+                type="button"
+                onClick={() => onSettingsOpen()}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
+                aria-label="Settings"
+              >
+                <Settings2 className="size-5 shrink-0" aria-hidden />
+                Settings
+              </button>
+            </Tooltip>
             <div className="flex items-center gap-1">
               <Tooltip content="Getting started" side="top">
                 <button
@@ -774,7 +786,7 @@ export function InboxSidebar({
                   <Info className="size-5" aria-hidden />
                 </button>
               </Tooltip>
-              <Tooltip content="Toggle theme" side="top">
+              <Tooltip content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`} side="top">
                 <button
                   type="button"
                   onClick={() => setTheme(getNextTheme(theme))}
