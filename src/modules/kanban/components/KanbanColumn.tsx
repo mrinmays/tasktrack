@@ -104,7 +104,7 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex-shrink-0 w-72 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-4 flex flex-col"
+      className="flex-shrink-0 w-[85vw] max-w-80 sm:w-72 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-3 sm:p-4 flex flex-col"
     >
       <div className="mb-4">
         {isEditing ? (

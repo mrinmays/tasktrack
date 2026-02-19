@@ -25,8 +25,8 @@ export function FocusTicketCard({
   const moveDestinations = moveTargets.filter((t) => t.id !== originalColumnId);
 
   return (
-    <div className="flex flex-col h-full justify-between">
-      <div className="shrink-0">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="order-2 lg:order-1 shrink-0 mt-3 lg:mt-0">
         <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-4">
           {ticket.title}
         </h3>
@@ -47,7 +47,7 @@ export function FocusTicketCard({
       </div>
 
       {ticket.description && typeof ticket.description === 'string' && (
-        <div className="flex-1 min-h-0 mt-2 overflow-y-auto">
+        <div className="order-3 lg:order-2 flex-1 min-h-0 mt-3 lg:mt-2 overflow-y-auto">
           <SanitizedHtml
             html={ticket.description}
             className="text-sm text-neutral-600 dark:text-neutral-400 ticket-description-content"
@@ -55,7 +55,7 @@ export function FocusTicketCard({
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-700">
+      <div className="order-1 lg:order-3 mt-4 flex flex-wrap items-center gap-2 pb-3 border-b border-neutral-200 dark:border-neutral-700 lg:pb-0 lg:pt-3 lg:border-b-0 lg:border-t">
         <button
           type="button"
           onClick={onDone}

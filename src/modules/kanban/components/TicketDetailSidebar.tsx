@@ -30,8 +30,6 @@ const ticketValidationSchema = Yup.object({
     }),
 });
 
-const SIDEBAR_WIDTH = 420;
-
 function CopyButton({ text }: { readonly text: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -302,13 +300,7 @@ export function TicketDetailSidebar({
         />
       )}
       <aside
-        className="fixed right-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-2xl z-50 flex flex-col border-l border-neutral-200 dark:border-neutral-700 transition-transform duration-300 ease-in-out"
-        style={{
-          width: SIDEBAR_WIDTH,
-          transform: isOpen
-            ? "translateX(0)"
-            : `translateX(${SIDEBAR_WIDTH}px)`,
-        }}
+        className={`fixed right-0 top-0 h-full w-full max-w-[26rem] bg-white dark:bg-neutral-900 shadow-2xl z-50 flex flex-col border-l border-neutral-200 dark:border-neutral-700 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
         aria-label="Ticket details"
       >
         {selectedTicket && (
@@ -326,7 +318,7 @@ export function TicketDetailSidebar({
           >
             {({ isSubmitting, dirty }) => (
               <Form className="flex flex-col h-full">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+                <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
                   <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2">
                     {isJira ? "JIRA Ticket" : "Local ticket"}
                   </h2>
@@ -340,7 +332,7 @@ export function TicketDetailSidebar({
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 min-h-0">
+                <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 space-y-5 min-h-0">
                   {isJira && selectedTicket.jiraData && (
                     <div className="pb-3 border-b border-neutral-100 dark:border-neutral-800 space-y-3">
                       <div className="flex items-center gap-3">
@@ -549,7 +541,7 @@ export function TicketDetailSidebar({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                         Created
@@ -574,14 +566,14 @@ export function TicketDetailSidebar({
                 </div>
 
                 {isEditable && (
-                  <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 px-5 py-4 flex justify-end gap-2">
+                  <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 px-4 sm:px-5 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         closeTicketDetail();
                       }}
-                      className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                     >
                       Cancel
                     </button>
@@ -589,7 +581,7 @@ export function TicketDetailSidebar({
                       type="submit"
                       onClick={(e) => e.stopPropagation()}
                       disabled={isSubmitting || !dirty}
-                      className="px-4 py-2 text-sm font-medium text-white dark:text-neutral-900 bg-neutral-800 dark:bg-neutral-200 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white dark:text-neutral-900 bg-neutral-800 dark:bg-neutral-200 rounded-md hover:bg-neutral-700 dark:hover:bg-neutral-300 disabled:opacity-50 transition-colors"
                     >
                       {isSubmitting ? "Saving…" : "Save"}
                     </button>

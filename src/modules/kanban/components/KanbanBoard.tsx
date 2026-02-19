@@ -3,13 +3,17 @@ import {
   horizontalListSortingStrategy,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import * as Tabs from "@radix-ui/react-tabs";
 import { Columns3, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Ticket } from "@/db/database";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { FocusZone, useFocusZone } from "@/modules/focus";
 import { useKanban } from "@/modules/kanban/hooks/useKanban";
 import { KanbanColumn } from "./KanbanColumn";
+
+type MobileView = "focus" | "board";
 
 export function KanbanBoard() {
   const {
@@ -26,6 +30,10 @@ export function KanbanBoard() {
     loading,
   } = useKanban();
   const { focusedData, focusActive, startFocus, endFocus } = useFocusZone();
+  const isMobileLayout = useMediaQuery("(max-width: 1023px)");
+  const [mobileView, setMobileView] = useState<MobileView>(() =>
+    isMobileLayout && focusActive ? "focus" : "board",
+  );
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [showCreateColumnInput, setShowCreateColumnInput] = useState(false);
   const createColumnInputRef = useRef<HTMLInputElement>(null);
@@ -40,9 +48,12 @@ export function KanbanBoard() {
   const handleStartFocus = useCallback(
     (ticket: Ticket) => {
       if (focusActive) return;
+      if (isMobileLayout) {
+        setMobileView("focus");
+      }
       startFocus(ticket);
     },
-    [focusActive, startFocus],
+    [focusActive, isMobileLayout, startFocus],
   );
 
   useEffect(() => {
@@ -69,28 +80,22 @@ export function KanbanBoard() {
     setShowCreateColumnInput(false);
   };
 
-  return (
-    <div className="h-screen bg-neutral-100 dark:bg-neutral-900 flex flex-col">
-      <FocusZone
-        moveTargets={moveTargets}
-        onTicketMove={handleTicketMove}
-        focusedData={focusedData}
-        onEndFocus={endFocus}
-      />
-      <div className="px-6 pt-4 pb-2 flex items-center justify-between gap-4 min-h-12">
+  const renderBoardContent = () => (
+    <>
+      <div className="px-3 sm:px-4 lg:px-6 pt-3 sm:pt-4 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 min-h-12">
         <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           Board
         </h1>
         {hasColumns && (
-          <div className="w-[28rem] flex justify-end">
+          <div className="w-full sm:w-auto sm:min-w-[22rem] sm:max-w-[28rem] flex sm:justify-end">
             {showCreateColumnInput ? (
-              <div className="flex items-center gap-2">
+              <div className="flex w-full sm:w-auto flex-col sm:flex-row sm:items-center gap-2">
                 <input
                   type="text"
                   value={newColumnTitle}
                   onChange={(e) => setNewColumnTitle(e.target.value)}
                   placeholder="New column title"
-                  className="h-8 w-52 px-3 text-sm text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+                  className="h-9 sm:h-8 w-full sm:w-52 px-3 text-sm text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleCreateSubmit();
@@ -105,7 +110,7 @@ export function KanbanBoard() {
                   type="button"
                   onClick={handleCreateSubmit}
                   disabled={creatingColumn}
-                  className="h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Add
                 </button>
@@ -115,7 +120,7 @@ export function KanbanBoard() {
                     setShowCreateColumnInput(false);
                     setNewColumnTitle("");
                   }}
-                  className="h-8 px-3 text-sm font-medium rounded border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                  className="h-9 sm:h-8 px-3 text-sm font-medium rounded border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-800"
                 >
                   Cancel
                 </button>
@@ -124,7 +129,7 @@ export function KanbanBoard() {
               <button
                 type="button"
                 onClick={() => setShowCreateColumnInput(true)}
-                className="inline-flex items-center gap-2 h-8 px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                className="inline-flex items-center justify-center gap-2 h-9 sm:h-8 w-full sm:w-auto px-3 text-sm font-medium rounded border border-neutral-200 dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
               >
                 <Plus className="size-4" aria-hidden />
                 Add column
@@ -139,7 +144,7 @@ export function KanbanBoard() {
           items={columns.map((column) => column.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <div className="flex-1 flex gap-4 px-6 pb-6 overflow-x-auto">
+          <div className="flex-1 flex gap-3 sm:gap-4 px-3 sm:px-4 lg:px-6 pb-4 sm:pb-6 overflow-x-auto">
             {columns.map((column) => {
               const columnTickets = getTicketsForColumn(column.id);
               return (
@@ -233,6 +238,53 @@ export function KanbanBoard() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  const shouldShowMobileSegmentedControl = isMobileLayout && focusActive;
+  const resolvedMobileView: MobileView =
+    isMobileLayout && focusActive ? mobileView : "board";
+  const focusZoneMode: "full" | "hidden" =
+    isMobileLayout && resolvedMobileView === "board" ? "hidden" : "full";
+
+  return (
+    <div className="h-screen bg-neutral-100 dark:bg-neutral-900 flex flex-col">
+      {shouldShowMobileSegmentedControl && (
+        <div className="shrink-0 px-3 pt-3 pb-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900">
+          <Tabs.Root
+            value={resolvedMobileView}
+            onValueChange={(value) => setMobileView(value as MobileView)}
+          >
+            <Tabs.List
+              aria-label="Mobile view mode"
+              className="grid grid-cols-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-1"
+            >
+              <Tabs.Trigger
+                value="focus"
+                className="h-9 rounded-md text-sm font-medium text-neutral-600 dark:text-neutral-300 data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900 transition-colors"
+              >
+                Focus
+              </Tabs.Trigger>
+              <Tabs.Trigger
+                value="board"
+                className="h-9 rounded-md text-sm font-medium text-neutral-600 dark:text-neutral-300 data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900 transition-colors"
+              >
+                Board
+              </Tabs.Trigger>
+            </Tabs.List>
+          </Tabs.Root>
+        </div>
+      )}
+
+      <FocusZone
+        moveTargets={moveTargets}
+        onTicketMove={handleTicketMove}
+        focusedData={focusedData}
+        onEndFocus={endFocus}
+        mode={focusZoneMode}
+      />
+
+      {(!isMobileLayout || resolvedMobileView === "board") && renderBoardContent()}
     </div>
   );
 }

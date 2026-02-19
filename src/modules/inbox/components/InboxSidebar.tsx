@@ -50,6 +50,7 @@ export interface InboxSidebarHandle {
 
 interface InboxSidebarProps {
   readonly isOpen: boolean;
+  readonly isMobile: boolean;
   readonly onOpen: () => void;
   readonly onClose: () => void;
   readonly onSettingsOpen: (section?: SectionId) => void;
@@ -63,6 +64,7 @@ function getNextTheme(current: "light" | "dark"): "light" | "dark" {
 
 export function InboxSidebar({
   isOpen,
+  isMobile,
   onOpen,
   onClose,
   onSettingsOpen,
@@ -244,13 +246,19 @@ export function InboxSidebar({
   return (
     <div
       ref={setInboxDropRef}
-      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 flex flex-col border-r border-neutral-200 dark:border-neutral-700 transition-[width,colors] duration-200 ${!isOpen && isOver
+      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 flex flex-col border-r border-neutral-200 dark:border-neutral-700 transition-[width,transform,colors] duration-200 ${!isOpen && isOver
         ? "ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30"
         : ""
-        }`}
-      style={{ width: isOpen ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED_WIDTH }}
+        } ${isMobile && !isOpen ? "-translate-x-full pointer-events-none" : "translate-x-0"}`}
+      style={{
+        width: isMobile
+          ? "min(20rem, calc(100vw - 1.5rem))"
+          : isOpen
+            ? SIDEBAR_WIDTH
+            : SIDEBAR_COLLAPSED_WIDTH,
+      }}
     >
-      {!isOpen ? (
+      {!isOpen && !isMobile ? (
         <>
           <div
             className="flex items-center justify-center shrink-0 border-b border-neutral-200 dark:border-neutral-700"

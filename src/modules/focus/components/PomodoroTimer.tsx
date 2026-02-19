@@ -54,7 +54,7 @@ export function PomodoroTimer({
   const settingsContext = useContext(SettingsContext);
 
   return (
-    <div className={`relative flex flex-col items-center justify-center rounded-xl p-6 ${colors.bg} h-full`}>
+    <div className={`relative flex flex-col items-center justify-center rounded-xl p-4 sm:p-6 ${colors.bg} h-full`}>
       {onFullscreen && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           {settingsContext && (
@@ -82,13 +82,13 @@ export function PomodoroTimer({
         </div>
       )}
 
-      <div className="flex items-center gap-1 mb-4">
+      <div className="mb-4 flex w-full flex-wrap items-center justify-center gap-1">
         {PHASE_TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => onSwitchPhase(tab.id)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+            className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-colors ${
               phase === tab.id
                 ? 'bg-white/90 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm'
                 : 'text-neutral-600 dark:text-neutral-400 hover:bg-white/50 dark:hover:bg-neutral-700/50'
@@ -99,15 +99,15 @@ export function PomodoroTimer({
         ))}
       </div>
 
-      <div className={`text-6xl font-bold tabular-nums tracking-tight ${colors.accent} select-none`}>
+      <div className={`text-5xl sm:text-6xl font-bold tabular-nums tracking-tight ${colors.accent} select-none`}>
         {display}
       </div>
 
-      <div className="flex items-center gap-3 mt-5">
+      <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
         <button
           type="button"
           onClick={running ? onPause : onStart}
-          className="flex items-center gap-2 px-8 py-2.5 rounded-lg bg-white/90 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold text-sm shadow-sm hover:bg-white dark:hover:bg-neutral-600 transition-colors"
+          className="flex items-center gap-2 px-6 sm:px-8 py-2.5 rounded-lg bg-white/90 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold text-sm shadow-sm hover:bg-white dark:hover:bg-neutral-600 transition-colors"
         >
           {running ? (
             <>

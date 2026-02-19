@@ -6,6 +6,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/hooks/useToast';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { DndProvider } from '@/contexts/DndProvider';
 import { SettingsContext } from '@/contexts/settings-context';
 import { TicketDetailProvider } from '@/contexts/TicketDetailContext';
@@ -33,6 +34,7 @@ function RootComponent() {
   const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
+  const isMobileLayout = useMediaQuery('(max-width: 1023px)');
   const jiraSyncMutation = useJiraSyncMutation();
   const [isInboxOpen, setIsInboxOpen] = useLocalStorage<boolean>('inbox-sidebar-open', true);
   const oauthPending = hasOAuthCallback();
@@ -109,15 +111,36 @@ function RootComponent() {
           <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
             <InboxSidebar
               isOpen={isInboxOpen}
+              isMobile={isMobileLayout}
               onOpen={() => setIsInboxOpen(true)}
               onClose={() => setIsInboxOpen(false)}
               onSettingsOpen={handleSettingsOpen}
               onSearchOpen={handleSearchOpen}
               imperativeRef={inboxRef}
             />
+            {isMobileLayout && isInboxOpen && (
+              <button
+                type="button"
+                aria-label="Close inbox sidebar"
+                className="fixed inset-0 z-40 bg-black/25"
+                onClick={() => setIsInboxOpen(false)}
+              />
+            )}
+            {isMobileLayout && !isInboxOpen && (
+              <button
+                type="button"
+                aria-label="Open inbox sidebar"
+                className="fixed bottom-3 left-3 z-[55] rounded-md bg-[#FDFC74] px-2.5 py-1.5 text-sm font-semibold text-black shadow-md transition-opacity hover:opacity-90"
+                onClick={() => setIsInboxOpen(true)}
+              >
+                tt
+              </button>
+            )}
             <main
               className={
-                isInboxOpen
+                isMobileLayout
+                  ? 'ml-0 transition-[margin] duration-200'
+                  : isInboxOpen
                   ? 'ml-80 transition-[margin] duration-200'
                   : 'ml-12 transition-[margin] duration-200'
               }

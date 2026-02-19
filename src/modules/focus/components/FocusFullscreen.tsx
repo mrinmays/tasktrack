@@ -93,7 +93,7 @@ export function FocusFullscreen({
       className={`focus-fullscreen-overlay fixed inset-0 z-[200] ${background} ${isClosing ? 'focus-fullscreen-exit' : 'focus-fullscreen-enter'} w-full h-full max-w-none max-h-none m-0 p-0 border-none`}
       aria-label="Focus mode fullscreen"
     >
-      <div className="absolute top-5 left-5 z-10">
+      <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-10">
         <Tooltip content="Toggle theme" side="bottom">
           <button
             type="button"
@@ -109,7 +109,7 @@ export function FocusFullscreen({
           </button>
         </Tooltip>
       </div>
-      <div className="absolute top-5 right-5 z-10">
+      <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
         <button
           type="button"
           onClick={handleClose}
@@ -121,9 +121,9 @@ export function FocusFullscreen({
         </button>
       </div>
 
-      <div className="flex items-center justify-center h-full px-8 py-12">
-        <div className="flex w-full max-w-6xl gap-8 h-full max-h-[600px]">
-          <div className="flex-[3] min-w-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-2xl p-8 border border-neutral-200/50 dark:border-neutral-700/50 shadow-lg">
+      <div className="flex h-full items-center justify-center overflow-y-auto px-3 sm:px-6 lg:px-8 py-16 sm:py-12">
+        <div className="flex h-full w-full max-w-6xl flex-col lg:flex-row gap-3 sm:gap-6 lg:gap-8 lg:max-h-[600px]">
+          <div className="flex-1 lg:flex-[3] min-w-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-neutral-200/50 dark:border-neutral-700/50 shadow-lg">
             <FocusTicketCard
               ticket={ticket}
               originalColumnId={originalColumnId}
@@ -134,7 +134,7 @@ export function FocusFullscreen({
             />
           </div>
 
-          <div className="flex-[2] min-w-0">
+          <div className="flex-1 lg:flex-[2] min-w-0">
             <PomodoroTimer
               phase={phase}
               display={display}
@@ -150,8 +150,8 @@ export function FocusFullscreen({
         </div>
       </div>
 
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
-        <span className="text-xs text-neutral-400 dark:text-neutral-500 select-none">
+      <div className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 px-3 text-center">
+        <span className="text-[11px] sm:text-xs text-neutral-400 dark:text-neutral-500 select-none">
           Press <kbd className="px-1.5 py-0.5 rounded bg-white/60 dark:bg-neutral-800/60 border border-neutral-200/50 dark:border-neutral-700/50 text-neutral-500 dark:text-neutral-400 font-mono text-[10px]">Esc</kbd> to exit
         </span>
       </div>
