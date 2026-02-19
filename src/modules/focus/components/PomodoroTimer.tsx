@@ -58,7 +58,7 @@ export function PomodoroTimer({
       {onFullscreen && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           {settingsContext && (
-            <Tooltip content="Settings" side="bottom">
+            <Tooltip content="Focus settings" side="bottom">
               <button
                 type="button"
                 onClick={() => settingsContext.openSettings('focus')}
