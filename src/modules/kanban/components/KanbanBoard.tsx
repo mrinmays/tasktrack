@@ -180,7 +180,7 @@ export function KanbanBoard() {
                 No columns yet
               </h2>
               <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                Add your first to start organizing tickets on the board.
+                Add a column to start organizing tickets on the board.
               </p>
             </div>
             {showCreateColumnInput ? (
