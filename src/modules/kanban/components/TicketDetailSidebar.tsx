@@ -1,7 +1,8 @@
 import { Formik, Form, Field, ErrorMessage, useFormikContext } from "formik";
 import * as Select from "@radix-ui/react-select";
+import { Callout } from "@radix-ui/themes";
 import * as Yup from "yup";
-import { Check, ChevronDown, X, ExternalLink, Copy } from "lucide-react";
+import { Check, ChevronDown, X, ExternalLink, Copy, Info } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
 import { updateTicket } from "@/modules/tickets";
@@ -327,7 +328,7 @@ export function TicketDetailSidebar({
               <Form className="flex flex-col h-full">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
                   <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2">
-                    {isJira ? "JIRA Ticket" : "Ticket Details"}
+                    {isJira ? "JIRA Ticket" : "Local ticket"}
                   </h2>
                   <button
                     type="button"
@@ -389,12 +390,21 @@ export function TicketDetailSidebar({
                     </div>
                   )}
 
+                  {isEditable && (
+                    <Callout.Root size="1" color="blue" variant="soft">
+                      <Callout.Icon>
+                        <Info className="size-4" aria-hidden />
+                      </Callout.Icon>
+                      <Callout.Text>All fields are editable.</Callout.Text>
+                    </Callout.Root>
+                  )}
+
                   <div>
                     <label
                       htmlFor="ticket-title"
                       className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
                     >
-                      Title
+                      Title <span className="text-red-500" aria-hidden>*</span>
                     </label>
                     {isEditable ? (
                       <>
@@ -411,7 +421,7 @@ export function TicketDetailSidebar({
                         />
                       </>
                     ) : (
-                      <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
+                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
                         {selectedTicket.title}
                       </p>
                     )}
@@ -427,14 +437,14 @@ export function TicketDetailSidebar({
                     {isEditable ? (
                       <TicketDescriptionField id="ticket-description" />
                     ) : (
-                      <div className="text-sm bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 min-h-[5rem] overflow-hidden">
+                      <div className="text-sm bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border-l-4 border-neutral-300 dark:border-neutral-600 min-h-[5rem] overflow-hidden cursor-not-allowed select-text [&_.ticket-description-content]:text-neutral-900 [&_.ticket-description-content]:dark:text-neutral-200">
                         {selectedTicket.description ? (
                           <SanitizedHtml
                             html={selectedTicket.description}
                             className="ticket-description-content"
                           />
                         ) : (
-                          <p className="text-neutral-500 dark:text-neutral-400">
+                          <p className="text-neutral-500 dark:text-neutral-300">
                             No description
                           </p>
                         )}
@@ -539,21 +549,12 @@ export function TicketDetailSidebar({
                     </div>
                   )}
 
-                  <div>
-                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-                      Type
-                    </span>
-                    <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 capitalize">
-                      {selectedTicket.type}
-                    </p>
-                  </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                         Created
                       </span>
-                      <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
+                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
                         {new Date(
                           selectedTicket.createdAt,
                         ).toLocaleDateString()}
@@ -563,7 +564,7 @@ export function TicketDetailSidebar({
                       <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
                         Updated
                       </span>
-                      <p className="text-sm text-neutral-900 dark:text-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700">
+                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
                         {new Date(
                           selectedTicket.updatedAt,
                         ).toLocaleDateString()}

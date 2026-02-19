@@ -2,12 +2,14 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+import "@radix-ui/themes/styles.css";
 import './index.css';
 import { routeTree } from './routeTree.gen';
 import { initializeDefaultColumns } from '@/modules/kanban/services/column.service';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { RadixThemeWrapper } from '@/components/RadixThemeWrapper';
 
 const router = createRouter({ routeTree });
 
@@ -31,11 +33,13 @@ async function bootstrap() {
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ToastProvider>
-          <TooltipPrimitive.Provider delayDuration={300}>
-            <RouterProvider router={router} />
-          </TooltipPrimitive.Provider>
-        </ToastProvider>
+        <RadixThemeWrapper>
+          <ToastProvider>
+            <TooltipPrimitive.Provider delayDuration={300}>
+              <RouterProvider router={router} />
+            </TooltipPrimitive.Provider>
+          </ToastProvider>
+        </RadixThemeWrapper>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>
