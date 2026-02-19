@@ -1,5 +1,7 @@
-import { Maximize2, Pause, Play, RotateCcw } from 'lucide-react';
+import { useContext } from 'react';
+import { Maximize2, Pause, Play, RotateCcw, Settings } from 'lucide-react';
 import { Tooltip } from '@/components/Tooltip';
+import { SettingsContext } from '@/contexts/settings-context';
 import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
 
 interface PomodoroTimerProps {
@@ -49,20 +51,35 @@ export function PomodoroTimer({
   onFullscreen,
 }: PomodoroTimerProps) {
   const colors = PHASE_COLORS[phase];
+  const settingsContext = useContext(SettingsContext);
 
   return (
     <div className={`relative flex flex-col items-center justify-center rounded-xl p-6 ${colors.bg} h-full`}>
       {onFullscreen && (
-        <Tooltip content="Fullscreen" side="bottom">
-          <button
-            type="button"
-            onClick={onFullscreen}
-            className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
-            aria-label="Enter fullscreen focus mode"
-          >
-            <Maximize2 className="size-3.5" aria-hidden />
-          </button>
-        </Tooltip>
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          {settingsContext && (
+            <Tooltip content="Settings" side="bottom">
+              <button
+                type="button"
+                onClick={() => settingsContext.openSettings('focus')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
+                aria-label="Open focus settings"
+              >
+                <Settings className="size-3.5" aria-hidden />
+              </button>
+            </Tooltip>
+          )}
+          <Tooltip content="Fullscreen" side="bottom">
+            <button
+              type="button"
+              onClick={onFullscreen}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/70 dark:bg-neutral-700/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-600 shadow-sm border border-white/50 dark:border-neutral-600/50 transition-all"
+              aria-label="Enter fullscreen focus mode"
+            >
+              <Maximize2 className="size-3.5" aria-hidden />
+            </button>
+          </Tooltip>
+        </div>
       )}
 
       <div className="flex items-center gap-1 mb-4">

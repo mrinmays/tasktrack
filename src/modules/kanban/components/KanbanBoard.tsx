@@ -105,7 +105,7 @@ export function KanbanBoard() {
                   type="button"
                   onClick={handleCreateSubmit}
                   disabled={creatingColumn}
-                  className="h-8 px-3 text-sm font-medium rounded bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-8 px-3 text-sm font-medium rounded border border-neutral-700 dark:border-neutral-300 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Add
                 </button>
@@ -124,8 +124,9 @@ export function KanbanBoard() {
               <button
                 type="button"
                 onClick={() => setShowCreateColumnInput(true)}
-                className="h-8 px-3 text-sm font-medium rounded bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90"
+                className="inline-flex items-center gap-2 h-8 px-3 text-sm font-medium rounded border border-neutral-700 dark:border-neutral-300 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
               >
+                <Plus className="size-4" aria-hidden />
                 Add column
               </button>
             )}
@@ -204,7 +205,7 @@ export function KanbanBoard() {
                   type="button"
                   onClick={handleCreateSubmit}
                   disabled={creatingColumn}
-                  className="h-9 px-4 text-sm font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-9 px-4 text-sm font-medium rounded-md border border-neutral-700 dark:border-neutral-300 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Add
                 </button>
@@ -223,7 +224,7 @@ export function KanbanBoard() {
               <button
                 type="button"
                 onClick={() => setShowCreateColumnInput(true)}
-                className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-md border border-neutral-700 dark:border-neutral-300 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
                 <Plus className="size-4" aria-hidden />
                 Add column

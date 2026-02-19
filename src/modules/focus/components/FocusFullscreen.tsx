@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Minimize2 } from 'lucide-react';
+import { Minimize2, Moon, Sun } from 'lucide-react';
+import { Tooltip } from '@/components/Tooltip';
+import { useTheme } from '@/hooks/useTheme';
 import type { Ticket } from '@/db/database';
 import type { MoveTarget } from '@/modules/kanban/components/TicketCard';
 import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
@@ -51,6 +53,7 @@ export function FocusFullscreen({
   onExit,
 }: FocusFullscreenProps) {
   const [isClosing, setIsClosing] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -82,6 +85,7 @@ export function FocusFullscreen({
   }, []);
 
   const background = PHASE_BACKGROUNDS[phase];
+  const nextTheme = theme === 'light' ? 'dark' : 'light';
 
   return createPortal(
     <dialog
@@ -89,6 +93,22 @@ export function FocusFullscreen({
       className={`focus-fullscreen-overlay fixed inset-0 z-[200] ${background} ${isClosing ? 'focus-fullscreen-exit' : 'focus-fullscreen-enter'} w-full h-full max-w-none max-h-none m-0 p-0 border-none`}
       aria-label="Focus mode fullscreen"
     >
+      <div className="absolute top-5 left-5 z-10">
+        <Tooltip content="Toggle theme" side="bottom">
+          <button
+            type="button"
+            onClick={() => setTheme(nextTheme)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/70 dark:bg-neutral-800/70 text-neutral-600 dark:text-neutral-300 hover:bg-white dark:hover:bg-neutral-700 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 transition-all shadow-sm"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? (
+              <Moon className="size-3.5" aria-hidden />
+            ) : (
+              <Sun className="size-3.5" aria-hidden />
+            )}
+          </button>
+        </Tooltip>
+      </div>
       <div className="absolute top-5 right-5 z-10">
         <button
           type="button"

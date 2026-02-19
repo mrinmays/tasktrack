@@ -7,6 +7,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/hooks/useToast';
 import { DndProvider } from '@/contexts/DndProvider';
+import { SettingsContext } from '@/contexts/settings-context';
 import { TicketDetailProvider } from '@/contexts/TicketDetailContext';
 import { InboxSidebar, useJiraSyncMutation } from '@/modules/inbox';
 import type { InboxSidebarHandle } from '@/modules/inbox';
@@ -96,37 +97,44 @@ function RootComponent() {
     queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
   }, [queryClient]);
 
+  const settingsContextValue = useMemo(
+    () => ({ openSettings: handleSettingsOpen }),
+    [handleSettingsOpen],
+  );
+
   return (
     <TicketDetailProvider>
-      <DndProvider>
-        <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
-          <InboxSidebar
-            isOpen={isInboxOpen}
-            onOpen={() => setIsInboxOpen(true)}
-            onClose={() => setIsInboxOpen(false)}
-            onSettingsOpen={handleSettingsOpen}
-            onSearchOpen={handleSearchOpen}
-            imperativeRef={inboxRef}
-          />
-          <main
-            className={
-              isInboxOpen
-                ? 'ml-80 transition-[margin] duration-200'
-                : 'ml-12 transition-[margin] duration-200'
-            }
-          >
-            <Outlet />
-          </main>
-          <TicketDetailSidebar onSaved={handleTicketSaved} />
-          <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
-          <SettingsDialog
-            key={settingsSection ?? 'default'}
-            open={isSettingsOpen}
-            onOpenChange={handleSettingsOpenChange}
-            initialSection={settingsSection}
-          />
-        </div>
-      </DndProvider>
+      <SettingsContext.Provider value={settingsContextValue}>
+        <DndProvider>
+          <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
+            <InboxSidebar
+              isOpen={isInboxOpen}
+              onOpen={() => setIsInboxOpen(true)}
+              onClose={() => setIsInboxOpen(false)}
+              onSettingsOpen={handleSettingsOpen}
+              onSearchOpen={handleSearchOpen}
+              imperativeRef={inboxRef}
+            />
+            <main
+              className={
+                isInboxOpen
+                  ? 'ml-80 transition-[margin] duration-200'
+                  : 'ml-12 transition-[margin] duration-200'
+              }
+            >
+              <Outlet />
+            </main>
+            <TicketDetailSidebar onSaved={handleTicketSaved} />
+            <SearchDialog open={isSearchOpen} onOpenChange={handleSearchOpenChange} />
+            <SettingsDialog
+              key={settingsSection ?? 'default'}
+              open={isSettingsOpen}
+              onOpenChange={handleSettingsOpenChange}
+              initialSection={settingsSection}
+            />
+          </div>
+        </DndProvider>
+      </SettingsContext.Provider>
     </TicketDetailProvider>
   );
 }

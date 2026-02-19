@@ -14,7 +14,7 @@ import {
   Plug,
   RefreshCw,
   Search,
-  Settings,
+  Settings2,
   Sun,
 } from "lucide-react";
 import { useImperativeHandle, useMemo, useState } from "react";
@@ -302,7 +302,7 @@ export function InboxSidebar({
                 className="flex items-center justify-center p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-md transition-colors"
                 aria-label="Settings"
               >
-                <Settings className="size-5" aria-hidden />
+                <Settings2 className="size-5" aria-hidden />
               </button>
             </Tooltip>
             <Tooltip content="Getting started" side="right">
@@ -381,7 +381,7 @@ export function InboxSidebar({
                 <button
                   type="button"
                   onClick={() => onSettingsOpen("jira")}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity"
                   aria-label="Connect JIRA"
                 >
                   <Plug className="size-3.5" aria-hidden />
@@ -392,7 +392,7 @@ export function InboxSidebar({
                   type="button"
                   disabled={syncing}
                   onClick={handleSyncFromJira}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
                   aria-label="Fetch JIRA tickets"
                 >
                   <RefreshCw
@@ -406,7 +406,7 @@ export function InboxSidebar({
                   type="button"
                   disabled={syncing}
                   onClick={handleSyncFromJira}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 hover:opacity-90 transition-opacity disabled:opacity-50"
                   aria-label="Sync from JIRA"
                 >
                   <RefreshCw
@@ -760,7 +760,7 @@ export function InboxSidebar({
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-md transition-colors"
               aria-label="Settings"
             >
-              <Settings className="size-5 shrink-0" aria-hidden />
+              <Settings2 className="size-5 shrink-0" aria-hidden />
               Settings
             </button>
             <div className="flex items-center gap-1">
