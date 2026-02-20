@@ -1,9 +1,9 @@
 import { Formik, Form, Field, ErrorMessage, useFormikContext } from "formik";
-import * as Select from "@radix-ui/react-select";
 import { Callout } from "@radix-ui/themes";
 import * as Yup from "yup";
 import { Check, ChevronDown, X, ExternalLink, Copy, Info } from "lucide-react";
 import { useMemo, useState } from "react";
+import * as Select from "@/components/Select";
 import type { JiraComment } from "@/db/database";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
 import { useAtlassianConfigQuery } from "@/modules/settings";
@@ -133,6 +133,8 @@ function TicketKeyField({
         </Select.Trigger>
         <Select.Portal>
           <Select.Content
+            allowSearch
+            searchPlaceholder="Search ticket ID"
             className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
             position="popper"
             sideOffset={4}

@@ -3,7 +3,6 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import * as Select from "@radix-ui/react-select";
 import {
   ChevronDown,
   ChevronLeft,
@@ -18,6 +17,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useImperativeHandle, useMemo, useState } from "react";
+import * as Select from "@/components/Select";
 import {
   GettingStartedDialog,
   SHORTCUT_DISPLAY,
@@ -571,6 +571,8 @@ export function InboxSidebar({
                     </Select.Trigger>
                     <Select.Portal>
                       <Select.Content
+                        allowSearch
+                        searchPlaceholder="Search ticket ID"
                         className="z-[60] overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg"
                         position="popper"
                         sideOffset={4}
