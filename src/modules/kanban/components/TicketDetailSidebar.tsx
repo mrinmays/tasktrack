@@ -241,6 +241,10 @@ function formatJiraCommentDate(value?: string): string | undefined {
   return date.toLocaleString();
 }
 
+function formatTicketTimestamp(value: number): string {
+  return new Date(value).toLocaleString();
+}
+
 interface NestedJiraComment extends JiraComment {
   children: NestedJiraComment[];
 }
@@ -623,24 +627,20 @@ export function TicketDetailSidebar({
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                    <div className="rounded-md bg-neutral-100 dark:bg-neutral-800/60 px-3 py-2.5">
+                      <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Created
                       </span>
-                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
-                        {new Date(
-                          selectedTicket.createdAt,
-                        ).toLocaleDateString()}
+                      <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-200 break-words">
+                        {formatTicketTimestamp(selectedTicket.createdAt)}
                       </p>
                     </div>
-                    <div>
-                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                    <div className="rounded-md bg-neutral-100 dark:bg-neutral-800/60 px-3 py-2.5">
+                      <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Updated
                       </span>
-                      <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
-                        {new Date(
-                          selectedTicket.updatedAt,
-                        ).toLocaleDateString()}
+                      <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-200 break-words">
+                        {formatTicketTimestamp(selectedTicket.updatedAt)}
                       </p>
                     </div>
                   </div>

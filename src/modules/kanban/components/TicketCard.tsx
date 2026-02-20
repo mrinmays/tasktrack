@@ -108,32 +108,37 @@ export function TicketCard({
             </p>
           )}
           {ticket.type === "jira" && ticket.jiraData && (
-            <div className="mt-2 flex items-center flex-wrap gap-2">
-              <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded">
+            <div className="mt-2 flex items-start flex-wrap gap-2">
+              <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded break-words whitespace-normal max-w-full">
                 {ticket.jiraData.jiraKey}
               </span>
+              {ticket.jiraData.status && (
+                <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded font-medium break-words whitespace-normal max-w-full">
+                  {ticket.jiraData.status}
+                </span>
+              )}
               {ticket.jiraData.priority && (
-                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium">
+                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
                   {ticket.jiraData.priority}
                 </span>
               )}
             </div>
           )}
           {ticket.type === "local" && ticket.customKey && (
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded">
+            <div className="mt-2 flex items-start flex-wrap gap-2">
+              <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded break-words whitespace-normal max-w-full">
                 {ticket.customKey}
               </span>
               {ticket.priority && (
-                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium">
+                <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
                   {ticket.priority}
                 </span>
               )}
             </div>
           )}
           {ticket.type === "local" && !ticket.customKey && ticket.priority && (
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium">
+            <div className="mt-2 flex items-start flex-wrap gap-2">
+              <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded font-medium break-words whitespace-normal max-w-full">
                 {ticket.priority}
               </span>
             </div>
