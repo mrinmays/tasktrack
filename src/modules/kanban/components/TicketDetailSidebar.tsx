@@ -264,6 +264,17 @@ function formatTicketTimestamp(value: number): string {
   return new Date(value).toLocaleString();
 }
 
+function buildJiraCommentUrl(
+  jiraIssueUrl: string | undefined,
+  commentId: string,
+): string | undefined {
+  if (!jiraIssueUrl) {
+    return undefined;
+  }
+  const separator = jiraIssueUrl.includes("?") ? "&" : "?";
+  return `${jiraIssueUrl}${separator}focusedCommentId=${encodeURIComponent(commentId)}`;
+}
+
 interface NestedJiraComment extends JiraComment {
   children: NestedJiraComment[];
 }
@@ -297,12 +308,16 @@ function buildJiraCommentTree(
 function JiraCommentItem({
   comment,
   depth = 0,
+  jiraIssueUrl,
 }: {
   readonly comment: NestedJiraComment;
   readonly depth?: number;
+  readonly jiraIssueUrl?: string;
 }) {
-  const createdAt = formatJiraCommentDate(comment.createdAt);
   const updatedAt = formatJiraCommentDate(comment.updatedAt);
+  const fallbackCreatedAt = formatJiraCommentDate(comment.createdAt);
+  const displayTimestamp = updatedAt ?? fallbackCreatedAt;
+  const commentUrl = buildJiraCommentUrl(jiraIssueUrl, comment.id);
 
   return (
     <div
@@ -314,9 +329,17 @@ function JiraCommentItem({
           <span className="font-medium text-neutral-700 dark:text-neutral-300">
             {comment.authorName ?? "Unknown author"}
           </span>
-          {createdAt && <span>• {createdAt}</span>}
-          {updatedAt && updatedAt !== createdAt && (
-            <span>• edited {updatedAt}</span>
+          {displayTimestamp && <span>• {displayTimestamp}</span>}
+          {commentUrl && (
+            <a
+              href={commentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+            >
+              Open in JIRA
+              <ExternalLink className="size-3" aria-hidden />
+            </a>
           )}
         </div>
         <div className="text-sm text-neutral-900 dark:text-neutral-200 space-y-2">
@@ -330,7 +353,12 @@ function JiraCommentItem({
         </div>
       </div>
       {comment.children.map((child) => (
-        <JiraCommentItem key={child.id} comment={child} depth={depth + 1} />
+        <JiraCommentItem
+          key={child.id}
+          comment={child}
+          depth={depth + 1}
+          jiraIssueUrl={jiraIssueUrl}
+        />
       ))}
     </div>
   );
@@ -676,7 +704,7 @@ export function TicketDetailSidebar({
                       <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Created
                       </span>
-                      <p className="mt-1 text-base font-medium text-neutral-900 dark:text-neutral-200 break-words leading-tight">
+                      <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
                         {formatTicketTimestamp(selectedTicket.createdAt)}
                       </p>
                     </div>
@@ -684,7 +712,7 @@ export function TicketDetailSidebar({
                       <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Updated
                       </span>
-                      <p className="mt-1 text-base font-medium text-neutral-900 dark:text-neutral-200 break-words leading-tight">
+                      <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
                         {formatTicketTimestamp(selectedTicket.updatedAt)}
                       </p>
                     </div>
@@ -703,6 +731,7 @@ export function TicketDetailSidebar({
                             <JiraCommentItem
                               key={comment.id}
                               comment={comment}
+                              jiraIssueUrl={selectedTicket.jiraData?.jiraUrl}
                             />
                           ))}
                         </div>

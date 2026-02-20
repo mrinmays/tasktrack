@@ -219,8 +219,11 @@ function renderNode(node: JiraAdfNode, key: string): ReactNode {
       return <span key={key}>{emojiText}</span>;
     }
     case 'mention': {
-      const mentionText = getStringAttr(node.attrs, 'text') ?? 'User';
-      return <span key={key} className="font-medium">@{mentionText}</span>;
+      const rawMentionText = getStringAttr(node.attrs, 'text') ?? 'User';
+      const mentionText = rawMentionText.startsWith('@')
+        ? rawMentionText
+        : `@${rawMentionText}`;
+      return <span key={key} className="font-medium">{mentionText}</span>;
     }
     case 'table':
       return (
