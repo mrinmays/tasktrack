@@ -1,5 +1,7 @@
 import { db, type Ticket } from '@/db/database';
 import type { TicketPriority } from '@/utils/ticketPriority';
+import { dispatchTicketsRemoved } from '@/utils/ticketsRemoved';
+import { dispatchTicketMoved } from '@/utils/ticketsMoved';
 
 type CreateTicketInput = Omit<Ticket, 'id' | 'createdAt' | 'updatedAt' | 'order' | 'priority'> & {
   id?: string;
@@ -72,10 +74,12 @@ export async function getJiraTickets(): Promise<Ticket[]> {
 
 export async function deleteTicket(id: string): Promise<void> {
   await db.tickets.delete(id);
+  dispatchTicketsRemoved([id]);
 }
 
 export async function deleteTickets(ids: string[]): Promise<void> {
   await db.tickets.bulkDelete(ids);
+  dispatchTicketsRemoved(ids);
 }
 
 export async function reorderTicketInColumn(
@@ -111,6 +115,7 @@ export async function moveTicket(
   newColumnId: string,
   targetTicketId?: string
 ): Promise<void> {
+  let moved = false;
   await db.transaction('rw', db.tickets, async () => {
     const movingTicket = await db.tickets.get(ticketId);
     if (!movingTicket) {
@@ -148,6 +153,8 @@ export async function moveTicket(
       return;
     }
 
+    moved = true;
+
     const sourceTickets = (
       await db.tickets.where('columnId').equals(sourceColumnId).toArray()
     ).sort(sortTicketsByOrder);
@@ -158,4 +165,8 @@ export async function moveTicket(
       });
     }
   });
+
+  if (moved) {
+    dispatchTicketMoved({ ticketId, newColumnId });
+  }
 }

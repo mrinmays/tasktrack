@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { db, type Ticket } from '@/db/database';
+import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
 import { getTicket } from '@/modules/tickets/services/ticket.service';
 import { subscribeToTicketsRemoved } from '@/utils/ticketsRemoved';
+import { subscribeToTicketMoved } from '@/utils/ticketsMoved';
 import { SETTING_KEYS } from '@/modules/focus/constants';
 import type { FocusedTicketData } from '@/modules/focus/types';
 
@@ -72,6 +74,18 @@ export function useFocusZone() {
     return subscribeToTicketsRemoved((ticketIds) => {
       const focused = focusedDataRef.current;
       if (focused && ticketIds.includes(focused.ticket.id)) {
+        void endFocusRef.current();
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    return subscribeToTicketMoved(({ ticketId, newColumnId }) => {
+      const focused = focusedDataRef.current;
+      if (!focused) {
+        return;
+      }
+      if (ticketId === focused.ticket.id && newColumnId === INBOX_COLUMN_ID) {
         void endFocusRef.current();
       }
     });
