@@ -6,6 +6,7 @@ import { Check, ChevronDown, X, ExternalLink, Copy, Info } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { JiraComment } from "@/db/database";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
+import { useAtlassianConfigQuery } from "@/modules/settings";
 import { updateTicket } from "@/modules/tickets";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
 import { useJiraTicketsQuery } from "@/modules/tickets/hooks/useTicketsQuery";
@@ -112,7 +113,7 @@ function TicketKeyField({
   return (
     <div className="space-y-1.5">
       <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-        Ticket ID
+        Link to ticket ID (optional)
       </span>
       <Select.Root
         value={selectMode === "existing" ? selectedKey : selectMode}
@@ -120,7 +121,7 @@ function TicketKeyField({
       >
         <Select.Trigger
           className="inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
-          aria-label="Ticket ID"
+          aria-label="Link to ticket ID"
         >
           <Select.Value placeholder="No ticket ID" />
           <Select.Icon>
@@ -324,6 +325,7 @@ export function TicketDetailSidebar({
 }) {
   const { selectedTicket, closeTicketDetail, openTicketDetail } =
     useTicketDetail();
+  const atlassianConfigQuery = useAtlassianConfigQuery();
   const jiraTicketsQuery = useJiraTicketsQuery();
   const jiraKeyOptions = useMemo(
     () =>
@@ -336,6 +338,17 @@ export function TicketDetailSidebar({
   const isOpen = selectedTicket !== null;
   const isJira = selectedTicket?.type === "jira";
   const isEditable = !isJira;
+  const linkedLocalJiraUrl = useMemo(() => {
+    if (!selectedTicket || selectedTicket.type !== "local") {
+      return undefined;
+    }
+    const key = selectedTicket.customKey?.trim().toUpperCase();
+    const instanceUrl = atlassianConfigQuery.data?.instanceUrl?.trim();
+    if (!key || !instanceUrl || !isValidTicketKey(key)) {
+      return undefined;
+    }
+    return `${instanceUrl.replace(/\/+$/, "")}/browse/${encodeURIComponent(key)}`;
+  }, [atlassianConfigQuery.data?.instanceUrl, selectedTicket]);
 
   const handleSave = async (values: {
     title: string;
@@ -464,6 +477,17 @@ export function TicketDetailSidebar({
                         </span>
                         <CopyButton text={selectedTicket.customKey} />
                       </div>
+                      {linkedLocalJiraUrl && (
+                        <a
+                          href={linkedLocalJiraUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                        >
+                          Open in JIRA
+                          <ExternalLink className="size-3" aria-hidden />
+                        </a>
+                      )}
                     </div>
                   )}
 
@@ -481,7 +505,10 @@ export function TicketDetailSidebar({
                       htmlFor="ticket-title"
                       className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
                     >
-                      Title <span className="text-red-500" aria-hidden>*</span>
+                      Title{" "}
+                      <span className="text-red-500" aria-hidden>
+                        *
+                      </span>
                     </label>
                     {isEditable ? (
                       <>
@@ -539,7 +566,7 @@ export function TicketDetailSidebar({
                         htmlFor="ticket-priority"
                         className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
                       >
-                        Priority
+                        Priority (optional)
                       </label>
                       <Field name="priority">
                         {({
@@ -655,7 +682,10 @@ export function TicketDetailSidebar({
                           {buildJiraCommentTree(
                             selectedTicket.jiraData.comments ?? [],
                           ).map((comment) => (
-                            <JiraCommentItem key={comment.id} comment={comment} />
+                            <JiraCommentItem
+                              key={comment.id}
+                              comment={comment}
+                            />
                           ))}
                         </div>
                       ) : (
