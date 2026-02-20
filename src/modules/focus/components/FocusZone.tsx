@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { Crosshair } from 'lucide-react';
-import type { MoveTarget } from '@/modules/kanban/components/TicketCard';
 import { FOCUS_ZONE_COLLAPSED_HEIGHT, FOCUS_ZONE_EXPANDED_HEIGHT } from '@/modules/focus/constants';
 import type { useFocusZone } from '@/modules/focus/hooks/useFocusZone';
 import { useDocumentTitle } from '@/modules/focus/hooks/useDocumentTitle';
@@ -12,16 +11,12 @@ import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
 
 interface FocusZoneProps {
-  readonly moveTargets: readonly MoveTarget[];
-  readonly onTicketMove: (ticketId: string, columnId: string) => void;
   readonly focusedData: ReturnType<typeof useFocusZone>['focusedData'];
   readonly onEndFocus: () => Promise<void>;
   readonly mode?: 'full' | 'hidden';
 }
 
 export function FocusZone({
-  moveTargets,
-  onTicketMove,
   focusedData,
   onEndFocus,
   mode = 'full',
@@ -33,38 +28,12 @@ export function FocusZone({
   useDocumentTitle(timer.display, timer.phase, isExpanded);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const handleDone = useCallback(async () => {
-    if (!focusedData) return;
-    const doneColumn = moveTargets.find(
-      (t) => t.title.toLowerCase() === 'done',
-    );
-    const targetColumnId = doneColumn
-      ? doneColumn.id
-      : moveTargets.at(-1)?.id;
-
-    if (targetColumnId) {
-      onTicketMove(focusedData.ticket.id, targetColumnId);
-    }
-    timer.resetAll();
-    setIsFullscreen(false);
-    await onEndFocus();
-  }, [focusedData, moveTargets, onTicketMove, timer, onEndFocus]);
-
   const handleDismiss = useCallback(async () => {
     if (!focusedData) return;
-    onTicketMove(focusedData.ticket.id, focusedData.originalColumnId);
     timer.resetAll();
     setIsFullscreen(false);
     await onEndFocus();
-  }, [focusedData, onTicketMove, timer, onEndFocus]);
-
-  const handleMoveTo = useCallback(async (columnId: string) => {
-    if (!focusedData) return;
-    onTicketMove(focusedData.ticket.id, columnId);
-    timer.resetAll();
-    setIsFullscreen(false);
-    await onEndFocus();
-  }, [focusedData, onTicketMove, timer, onEndFocus]);
+  }, [focusedData, timer, onEndFocus]);
 
   const handleExitFullscreen = useCallback(() => {
     setIsFullscreen(false);
@@ -76,11 +45,7 @@ export function FocusZone({
         {isFullscreen && focusedData && (
           <FocusFullscreen
             ticket={focusedData.ticket}
-            originalColumnId={focusedData.originalColumnId}
-            moveTargets={moveTargets}
-            onDone={handleDone}
             onDismiss={handleDismiss}
-            onMoveTo={handleMoveTo}
             phase={timer.phase}
             display={timer.display}
             running={timer.running}
@@ -114,11 +79,7 @@ export function FocusZone({
             <div className="order-2 lg:order-1 shrink-0 lg:flex-[3] min-w-0 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 sm:p-5 border border-neutral-200 dark:border-neutral-700">
               <FocusTicketCard
                 ticket={focusedData.ticket}
-                originalColumnId={focusedData.originalColumnId}
-                moveTargets={moveTargets}
-                onDone={handleDone}
                 onDismiss={handleDismiss}
-                onMoveTo={handleMoveTo}
               />
             </div>
             <div className="order-1 lg:order-2 shrink-0 lg:flex-[2] min-w-0 min-h-[18rem] lg:min-h-0">
@@ -153,11 +114,7 @@ export function FocusZone({
       {isFullscreen && focusedData && (
         <FocusFullscreen
           ticket={focusedData.ticket}
-          originalColumnId={focusedData.originalColumnId}
-          moveTargets={moveTargets}
-          onDone={handleDone}
           onDismiss={handleDismiss}
-          onMoveTo={handleMoveTo}
           phase={timer.phase}
           display={timer.display}
           running={timer.running}

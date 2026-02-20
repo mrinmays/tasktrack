@@ -4,18 +4,13 @@ import { Minimize2, Moon, Sun } from 'lucide-react';
 import { Tooltip } from '@/components/Tooltip';
 import { useTheme } from '@/hooks/useTheme';
 import type { Ticket } from '@/db/database';
-import type { MoveTarget } from '@/modules/kanban/components/TicketCard';
 import type { PomodoroPhase, PomodoroSettings } from '@/modules/focus/types';
 import { FocusTicketCard } from './FocusTicketCard';
 import { PomodoroTimer } from './PomodoroTimer';
 
 interface FocusFullscreenProps {
   readonly ticket: Ticket;
-  readonly originalColumnId: string;
-  readonly moveTargets: readonly MoveTarget[];
-  readonly onDone: () => void;
   readonly onDismiss: () => void;
-  readonly onMoveTo: (columnId: string) => void;
   readonly phase: PomodoroPhase;
   readonly display: string;
   readonly running: boolean;
@@ -36,11 +31,7 @@ const PHASE_BACKGROUNDS: Record<PomodoroPhase, string> = {
 
 export function FocusFullscreen({
   ticket,
-  originalColumnId,
-  moveTargets,
-  onDone,
   onDismiss,
-  onMoveTo,
   phase,
   display,
   running,
@@ -126,11 +117,7 @@ export function FocusFullscreen({
           <div className="flex-1 lg:flex-[3] min-w-0 bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-neutral-200/50 dark:border-neutral-700/50 shadow-lg">
             <FocusTicketCard
               ticket={ticket}
-              originalColumnId={originalColumnId}
-              moveTargets={moveTargets}
-              onDone={onDone}
               onDismiss={onDismiss}
-              onMoveTo={onMoveTo}
             />
           </div>
 

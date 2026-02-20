@@ -31,6 +31,7 @@ interface TicketCardProps {
   readonly deleting?: boolean;
   readonly onStartFocus?: (ticket: Ticket) => void;
   readonly focusActive?: boolean;
+  readonly focusedTicketId?: string;
 }
 
 export function TicketCard({
@@ -42,6 +43,7 @@ export function TicketCard({
   deleting = false,
   onStartFocus,
   focusActive = false,
+  focusedTicketId,
 }: TicketCardProps) {
   const { openTicketDetail } = useTicketDetail();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -79,6 +81,7 @@ export function TicketCard({
     showMenu && moveTargets
       ? moveTargets.filter((t) => t.id !== ticket.columnId)
       : [];
+  const isFocusedTicket = focusedTicketId === ticket.id;
 
   const dragProps = showMenu ? {} : { ...attributes, ...listeners };
   const contentDragProps = showMenu ? { ...attributes, ...listeners } : {};
@@ -87,7 +90,11 @@ export function TicketCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col ${showMenu ? "" : "cursor-move"}`}
+      className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 p-3 mb-2 hover:shadow-md transition-shadow flex flex-col ${
+        isFocusedTicket
+          ? "ring-2 ring-inset ring-amber-400 dark:ring-amber-500"
+          : ""
+      } ${showMenu ? "" : "cursor-move"}`}
       {...dragProps}
     >
       <div className="flex items-start justify-between gap-2">
@@ -224,23 +231,16 @@ export function TicketCard({
         )}
       </div>
 
-      {onStartFocus && (
+      {onStartFocus && !focusActive && (
         <div className="flex justify-end mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700/50">
-          <Tooltip
-            content={
-              focusActive
-                ? "Another ticket is in focus"
-                : "Start focused work session"
-            }
-          >
+          <Tooltip content="Start focused work session">
             <button
               type="button"
-              disabled={focusActive}
               onClick={(e) => {
                 e.stopPropagation();
                 onStartFocus(ticket);
               }}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-neutral-500 dark:disabled:hover:text-neutral-400 disabled:hover:bg-transparent"
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
             >
               <PlayCircle className="size-3.5" aria-hidden />
               Focus

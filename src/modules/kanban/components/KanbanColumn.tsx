@@ -23,6 +23,7 @@ interface KanbanColumnProps {
   readonly deletingTicket: boolean;
   readonly onStartFocus?: (ticket: Ticket) => void;
   readonly focusActive?: boolean;
+  readonly focusedTicketId?: string;
 }
 
 export function KanbanColumn({
@@ -37,6 +38,7 @@ export function KanbanColumn({
   deletingTicket,
   onStartFocus,
   focusActive,
+  focusedTicketId,
 }: KanbanColumnProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(column.title);
@@ -227,6 +229,7 @@ export function KanbanColumn({
             deleting={deletingTicket}
             onStartFocus={onStartFocus}
             focusActive={focusActive}
+            focusedTicketId={focusedTicketId}
           />
         ))}
         {tickets.length === 0 && isTicketDropOver && (

@@ -167,6 +167,7 @@ export function KanbanBoard() {
                     deletingTicket={deletingTicket}
                     onStartFocus={handleStartFocus}
                     focusActive={focusActive}
+                    focusedTicketId={focusedData?.ticket.id}
                   />
                 </SortableContext>
               );
@@ -280,8 +281,6 @@ export function KanbanBoard() {
       )}
 
       <FocusZone
-        moveTargets={moveTargets}
-        onTicketMove={handleTicketMove}
         focusedData={focusedData}
         onEndFocus={endFocus}
         mode={focusZoneMode}
