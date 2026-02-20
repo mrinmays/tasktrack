@@ -1,0 +1,1 @@
+export const MAX_COLUMN_TITLE_LENGTH = 250;

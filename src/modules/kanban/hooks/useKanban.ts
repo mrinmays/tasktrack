@@ -3,6 +3,7 @@ import type { Ticket } from '@/db/database';
 import type { Column } from '@/modules/kanban/types';
 import { queryKeys } from '@/hooks/queryKeys';
 import { INBOX_COLUMN_ID } from '@/modules/inbox/types';
+import { MAX_COLUMN_TITLE_LENGTH } from '@/modules/kanban/constants';
 import {
   useColumnsQuery,
   useCreateColumnMutation,
@@ -44,8 +45,15 @@ export function useKanban() {
   const tickets: Ticket[] = ticketsQuery.data ?? [];
   const loading = columnsQuery.isLoading || ticketsQuery.isLoading;
 
+  const normalizeColumnTitle = (title: string): string =>
+    title.trim().slice(0, MAX_COLUMN_TITLE_LENGTH);
+
   const handleColumnTitleUpdate = (columnId: string, newTitle: string) => {
-    updateColumnMutation.mutate({ columnId, updates: { title: newTitle } });
+    const normalizedTitle = normalizeColumnTitle(newTitle);
+    if (!normalizedTitle) {
+      return;
+    }
+    updateColumnMutation.mutate({ columnId, updates: { title: normalizedTitle } });
   };
 
   const handleTicketMove = (ticketId: string, newColumnId: string) => {
@@ -68,7 +76,7 @@ export function useKanban() {
   };
 
   const handleColumnCreate = (title: string) => {
-    const normalizedTitle = title.trim();
+    const normalizedTitle = normalizeColumnTitle(title);
     if (!normalizedTitle) {
       return;
     }

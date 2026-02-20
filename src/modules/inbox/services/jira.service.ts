@@ -1,4 +1,4 @@
-import type { Ticket } from '@/db/database';
+import type { JiraComment, Ticket } from '@/db/database';
 import type { AtlassianConfig } from '@/modules/settings';
 import { createTicket, updateTicket, getAllTickets, getJiraTickets, deleteTickets } from '@/modules/tickets';
 import {
@@ -77,6 +77,7 @@ async function issuesToTickets(
 
   for (const issue of issues) {
     const description = descriptionToHtml(issue);
+    const comments = extractIssueComments(issue);
     const jiraData = {
       jiraId: issue.id,
       jiraUrl: `${config.instanceUrl}/browse/${issue.key}`,
@@ -84,6 +85,7 @@ async function issuesToTickets(
       status: issue.fields.status.name,
       assignee: issue.fields.assignee?.displayName,
       priority: issue.fields.priority?.name,
+      comments,
     };
     const priority = normalizeTicketPriority(issue.fields.priority?.name);
 
@@ -118,6 +120,48 @@ async function issuesToTickets(
   return { created, updated, deleted };
 }
 
+function extractIssueComments(issue: JiraIssue): JiraComment[] | undefined {
+  const comments = issue.fields.comment?.comments;
+  if (!comments || comments.length === 0) {
+    return undefined;
+  }
+
+  return comments.map((comment) => ({
+    id: comment.id,
+    parentId: comment.parentId ? String(comment.parentId) : undefined,
+    authorName: comment.author?.displayName,
+    createdAt: comment.created,
+    updatedAt: comment.updated,
+    body: isAdfNode(comment.body) ? comment.body : undefined,
+  }));
+}
+
+function isAdfNode(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const node = value as { type?: unknown };
+  return typeof node.type === 'string';
+}
+
+interface JiraIssueComment {
+  id: string;
+  parentId?: string | number;
+  created?: string;
+  updated?: string;
+  author?: {
+    displayName?: string;
+  };
+  body?: unknown;
+}
+
+interface JiraIssueCommentCollection {
+  comments: JiraIssueComment[];
+  total?: number;
+  maxResults?: number;
+  startAt?: number;
+}
+
 export interface JiraIssue {
   id: string;
   key: string;
@@ -133,6 +177,7 @@ export interface JiraIssue {
     priority?: {
       name: string;
     };
+    comment?: JiraIssueCommentCollection;
   };
   renderedFields?: Record<string, unknown>;
   self: string;
@@ -144,11 +189,113 @@ export interface JiraSearchResponse {
 
 const SEARCH_FIELDS = '*navigable';
 
-function buildSearchUrl(cloudId: string | undefined, instanceUrl: string, jql: string): string {
-  const base = cloudId
+function buildApiBase(cloudId: string | undefined, instanceUrl: string): string {
+  return cloudId
     ? `https://api.atlassian.com/ex/jira/${cloudId}`
     : instanceUrl;
+}
+
+function buildSearchUrl(cloudId: string | undefined, instanceUrl: string, jql: string): string {
+  const base = buildApiBase(cloudId, instanceUrl);
   return `${base}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=${SEARCH_FIELDS}&maxResults=50&expand=renderedFields`;
+}
+
+function buildIssueCommentsUrl(
+  cloudId: string | undefined,
+  instanceUrl: string,
+  issueKey: string,
+  startAt: number
+): string {
+  const base = buildApiBase(cloudId, instanceUrl);
+  return `${base}/rest/api/3/issue/${encodeURIComponent(issueKey)}/comment?startAt=${startAt}&maxResults=100`;
+}
+
+function isCommentsIncomplete(issue: JiraIssue): boolean {
+  const commentField = issue.fields.comment;
+  if (!commentField) {
+    return true;
+  }
+
+  const loadedCount = commentField.comments.length;
+  const totalCount = typeof commentField.total === 'number'
+    ? commentField.total
+    : loadedCount;
+  return loadedCount < totalCount;
+}
+
+async function fetchAllIssueComments(
+  issueKey: string,
+  cloudId: string | undefined,
+  instanceUrl: string,
+  accessToken: string
+): Promise<JiraIssueCommentCollection | undefined> {
+  let startAt = 0;
+  let total = 0;
+  let maxResults = 0;
+  const comments: JiraIssueComment[] = [];
+
+  while (true) {
+    const response = await fetch(buildIssueCommentsUrl(cloudId, instanceUrl, issueKey, startAt), {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const data = await response.json() as JiraIssueCommentCollection;
+    total = typeof data.total === 'number' ? data.total : comments.length;
+    maxResults = typeof data.maxResults === 'number' ? data.maxResults : 0;
+    const pageComments = Array.isArray(data.comments) ? data.comments : [];
+    comments.push(...pageComments);
+
+    const pageSize = maxResults > 0 ? maxResults : pageComments.length;
+    if (comments.length >= total || pageSize === 0) {
+      return {
+        comments,
+        total,
+        maxResults,
+        startAt: 0,
+      };
+    }
+    startAt += pageSize;
+  }
+}
+
+async function hydrateIssueComments(
+  issues: JiraIssue[],
+  config: AtlassianConfig,
+  accessToken: string
+): Promise<JiraIssue[]> {
+  const hydratedIssues = await Promise.all(issues.map(async (issue) => {
+    if (!isCommentsIncomplete(issue)) {
+      return issue;
+    }
+
+    const comments = await fetchAllIssueComments(
+      issue.key,
+      config.cloudId,
+      config.instanceUrl,
+      accessToken
+    );
+
+    if (!comments) {
+      return issue;
+    }
+
+    return {
+      ...issue,
+      fields: {
+        ...issue.fields,
+        comment: comments,
+      },
+    };
+  }));
+
+  return hydratedIssues;
 }
 
 export async function fetchJiraTickets(jql?: string): Promise<JiraSyncResult> {
@@ -185,6 +332,6 @@ export async function fetchJiraTickets(jql?: string): Promise<JiraSyncResult> {
   }
 
   const data: JiraSearchResponse = await response.json();
-  return issuesToTickets(data.issues, config);
+  const issuesWithComments = await hydrateIssueComments(data.issues, config, accessToken);
+  return issuesToTickets(issuesWithComments, config);
 }
-

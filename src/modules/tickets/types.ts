@@ -1,4 +1,4 @@
-import type { Ticket } from '@/db/database';
+import type { JiraComment, Ticket } from '@/db/database';
 import type { TicketPriority } from '@/utils/ticketPriority';
 
 export type TicketType = 'jira' | 'local';
@@ -14,6 +14,7 @@ export interface JiraTicket extends Ticket {
     status?: string;
     assignee?: string;
     priority?: string;
+    comments?: JiraComment[];
   };
 }
 

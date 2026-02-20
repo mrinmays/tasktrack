@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Column } from "@/modules/kanban/types";
 import type { Ticket } from "@/db/database";
 import type { MoveTarget } from "@/modules/kanban/components/TicketCard";
+import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { TicketCard } from "./TicketCard";
 
@@ -112,6 +113,7 @@ export function KanbanColumn({
             type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
+            maxLength={MAX_COLUMN_TITLE_LENGTH}
             onBlur={handleTitleSubmit}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -124,62 +126,64 @@ export function KanbanColumn({
             ref={titleInputRef}
           />
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="space-y-2">
             <button
               type="button"
               ref={setActivatorNodeRef}
-              className="shrink-0 p-1 rounded text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 cursor-grab active:cursor-grabbing touch-none"
+              className="w-full h-6 inline-flex items-center justify-center rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 cursor-grab active:cursor-grabbing touch-none"
               aria-label={`Drag ${column.title} column`}
               {...attributes}
               {...listeners}
             >
-              <GripVertical className="size-4" aria-hidden />
+              <GripVertical className="size-4 rotate-90" aria-hidden />
             </button>
-            <h2 className="flex-1 px-1 py-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-              {column.title}
-            </h2>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button
-                  type="button"
-                  className="shrink-0 p-1 rounded text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
-                  aria-label={`${column.title} column options`}
-                >
-                  <MoreVertical className="size-4" aria-hidden />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="z-[60] min-w-[10rem] rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
-                  side="right"
-                  sideOffset={8}
-                  align="start"
-                >
-                  <DropdownMenu.Item
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      handleStartEditing();
-                    }}
+            <div className="flex items-start gap-2">
+              <h2 className="flex-1 px-1 py-0.5 text-lg font-semibold text-neutral-900 dark:text-neutral-100 whitespace-normal break-words leading-snug">
+                {column.title}
+              </h2>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    className="mt-1 shrink-0 p-1 rounded text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+                    aria-label={`${column.title} column options`}
                   >
-                    <Pencil className="size-3.5" aria-hidden />
-                    Rename
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="my-1 h-px bg-neutral-200 dark:bg-neutral-700" />
-                  <DropdownMenu.Item
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 cursor-pointer data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-950/40 outline-none disabled:opacity-60"
-                    disabled={deleting}
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      setDeleteDialogOpen(true);
-                    }}
+                    <MoreVertical className="size-4" aria-hidden />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    className="z-[60] min-w-[10rem] rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
+                    side="right"
+                    sideOffset={8}
+                    align="start"
                   >
-                    <Trash2 className="size-3.5" aria-hidden />
-                    Delete
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                    <DropdownMenu.Item
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700 outline-none"
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        handleStartEditing();
+                      }}
+                    >
+                      <Pencil className="size-3.5" aria-hidden />
+                      Rename
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator className="my-1 h-px bg-neutral-200 dark:bg-neutral-700" />
+                    <DropdownMenu.Item
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 cursor-pointer data-[highlighted]:bg-red-50 dark:data-[highlighted]:bg-red-950/40 outline-none disabled:opacity-60"
+                      disabled={deleting}
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="size-3.5" aria-hidden />
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
 
             <DeleteConfirmationDialog
               open={deleteDialogOpen}

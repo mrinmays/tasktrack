@@ -1,11 +1,14 @@
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
   PointerSensor,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import type { CollisionDetection } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
@@ -44,6 +47,25 @@ export function DndProvider({ children }: DndProviderProps) {
       },
     }),
   );
+
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
+    const dragType = args.active.data.current?.type as
+      | "ticket"
+      | "column"
+      | undefined;
+
+    if (dragType === "column") {
+      const columnContainers = args.droppableContainers.filter(
+        (container) => container.data.current?.type === "column",
+      );
+      return closestCenter({
+        ...args,
+        droppableContainers: columnContainers,
+      });
+    }
+
+    return rectIntersection(args);
+  }, []);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const id = event.active.id as string;
@@ -251,6 +273,7 @@ export function DndProvider({ children }: DndProviderProps) {
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}

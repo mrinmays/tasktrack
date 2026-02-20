@@ -4,6 +4,7 @@ import { Callout } from "@radix-ui/themes";
 import * as Yup from "yup";
 import { Check, ChevronDown, X, ExternalLink, Copy, Info } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { JiraComment } from "@/db/database";
 import { useTicketDetail } from "@/hooks/useTicketDetail";
 import { updateTicket } from "@/modules/tickets";
 import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
@@ -11,7 +12,8 @@ import { useJiraTicketsQuery } from "@/modules/tickets/hooks/useTicketsQuery";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
 import { isEmptyEditorHtml } from "@/utils/editorHtml";
-import { SanitizedHtml } from "./SanitizedHtml";
+import { JiraAdfRenderer } from "@/modules/kanban/components/JiraAdfRenderer";
+import { SanitizedHtml } from "@/modules/kanban/components/SanitizedHtml";
 
 type EditablePriority = TicketPriority | "none";
 
@@ -228,6 +230,85 @@ function TicketKeyField({
           </span>
         </div>
       )}
+    </div>
+  );
+}
+
+function formatJiraCommentDate(value?: string): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toLocaleString();
+}
+
+interface NestedJiraComment extends JiraComment {
+  children: NestedJiraComment[];
+}
+
+function buildJiraCommentTree(
+  comments: readonly JiraComment[],
+): NestedJiraComment[] {
+  const nodeById = new Map<string, NestedJiraComment>();
+  const roots: NestedJiraComment[] = [];
+
+  for (const comment of comments) {
+    nodeById.set(comment.id, { ...comment, children: [] });
+  }
+
+  for (const node of nodeById.values()) {
+    if (!node.parentId) {
+      roots.push(node);
+      continue;
+    }
+    const parent = nodeById.get(node.parentId);
+    if (parent && parent.id !== node.id) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots;
+}
+
+function JiraCommentItem({
+  comment,
+  depth = 0,
+}: {
+  readonly comment: NestedJiraComment;
+  readonly depth?: number;
+}) {
+  const createdAt = formatJiraCommentDate(comment.createdAt);
+  const updatedAt = formatJiraCommentDate(comment.updatedAt);
+
+  return (
+    <div
+      className={`space-y-2 ${depth > 0 ? "border-l border-neutral-300 dark:border-neutral-700 pl-3" : ""}`}
+      style={{ marginLeft: depth * 8 }}
+    >
+      <div className="rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 px-3 py-2 space-y-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <span className="font-medium text-neutral-700 dark:text-neutral-300">
+            {comment.authorName ?? "Unknown author"}
+          </span>
+          {createdAt && <span>• {createdAt}</span>}
+          {updatedAt && updatedAt !== createdAt && (
+            <span>• edited {updatedAt}</span>
+          )}
+        </div>
+        <div className="text-sm text-neutral-900 dark:text-neutral-200 space-y-2">
+          {comment.body ? (
+            <JiraAdfRenderer doc={comment.body} />
+          ) : (
+            <p className="text-neutral-500 dark:text-neutral-300">
+              No comment body
+            </p>
+          )}
+        </div>
+      </div>
+      {comment.children.map((child) => (
+        <JiraCommentItem key={child.id} comment={child} depth={depth + 1} />
+      ))}
     </div>
   );
 }
@@ -563,6 +644,27 @@ export function TicketDetailSidebar({
                       </p>
                     </div>
                   </div>
+
+                  {isJira && selectedTicket.jiraData && (
+                    <div>
+                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                        Comments
+                      </span>
+                      {(selectedTicket.jiraData.comments?.length ?? 0) > 0 ? (
+                        <div className="space-y-3">
+                          {buildJiraCommentTree(
+                            selectedTicket.jiraData.comments ?? [],
+                          ).map((comment) => (
+                            <JiraCommentItem key={comment.id} comment={comment} />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
+                          No comments
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {isEditable && (

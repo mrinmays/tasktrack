@@ -8,6 +8,7 @@ import { Columns3, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Ticket } from "@/db/database";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { MAX_COLUMN_TITLE_LENGTH } from "@/modules/kanban/constants";
 import { INBOX_COLUMN_ID } from "@/modules/inbox/types";
 import { FocusZone, useFocusZone } from "@/modules/focus";
 import { useKanban } from "@/modules/kanban/hooks/useKanban";
@@ -94,6 +95,7 @@ export function KanbanBoard() {
                   type="text"
                   value={newColumnTitle}
                   onChange={(e) => setNewColumnTitle(e.target.value)}
+                  maxLength={MAX_COLUMN_TITLE_LENGTH}
                   placeholder="New column title"
                   className="h-9 sm:h-8 w-full sm:w-52 px-3 text-sm text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
                   onKeyDown={(e) => {
@@ -194,6 +196,7 @@ export function KanbanBoard() {
                   type="text"
                   value={newColumnTitle}
                   onChange={(e) => setNewColumnTitle(e.target.value)}
+                  maxLength={MAX_COLUMN_TITLE_LENGTH}
                   placeholder="Column title"
                   className="h-9 w-48 px-3 text-sm text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
                   onKeyDown={(e) => {

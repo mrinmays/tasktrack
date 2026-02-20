@@ -19,10 +19,20 @@ export interface Ticket {
     status?: string;
     assignee?: string;
     priority?: string;
+    comments?: JiraComment[];
   };
   customKey?: string;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface JiraComment {
+  id: string;
+  parentId?: string;
+  authorName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  body?: unknown;
 }
 
 export interface Column {
