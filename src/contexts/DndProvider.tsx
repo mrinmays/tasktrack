@@ -187,10 +187,16 @@ export function DndProvider({ children }: DndProviderProps) {
         if (!dropTarget) return;
 
         const { targetTicketId } = dropTarget;
+        const canReorderInSourceColumn =
+          (active.data.current?.allowReorderInColumn as boolean | undefined) ??
+          true;
         const isSameColumnReorder =
           draggedColumnId === dropTarget.columnId && targetTicketId;
 
         if (isSameColumnReorder) {
+          if (!canReorderInSourceColumn) {
+            return;
+          }
           await reorderTicketInColumn(
             activeEntityId,
             targetTicketId,

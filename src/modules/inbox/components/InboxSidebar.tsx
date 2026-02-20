@@ -232,6 +232,7 @@ export function InboxSidebar({
             <TicketCard
               key={ticket.id}
               ticket={ticket}
+              allowReorderInColumn={resolvedSortMode === "custom"}
               moveTargets={columns}
               onMove={moveTicketToColumn}
               onDelete={handleTicketDelete}
@@ -246,10 +247,11 @@ export function InboxSidebar({
   return (
     <div
       ref={setInboxDropRef}
-      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 flex flex-col border-r border-neutral-200 dark:border-neutral-700 transition-[width,transform,colors] duration-200 ${!isOpen && isOver
-        ? "ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30"
-        : ""
-        } ${isMobile && !isOpen ? "-translate-x-full pointer-events-none" : "translate-x-0"}`}
+      className={`fixed left-0 top-0 h-full bg-white dark:bg-neutral-900 shadow-xl z-50 flex flex-col border-r border-neutral-200 dark:border-neutral-700 transition-[width,transform,colors] duration-200 ${
+        !isOpen && isOver
+          ? "ring-2 ring-blue-500 dark:ring-blue-400 ring-inset bg-blue-50/50 dark:bg-blue-950/30"
+          : ""
+      } ${isMobile && !isOpen ? "-translate-x-full pointer-events-none" : "translate-x-0"}`}
       style={{
         width: isMobile
           ? "min(20rem, calc(100vw - 1.5rem))"
@@ -274,7 +276,10 @@ export function InboxSidebar({
             </button>
           </div>
           <div className="flex flex-col items-center gap-3 pt-3 shrink-0">
-            <Tooltip content={`Search (${SHORTCUT_DISPLAY.search})`} side="right">
+            <Tooltip
+              content={`Search (${SHORTCUT_DISPLAY.search})`}
+              side="right"
+            >
               <button
                 type="button"
                 onClick={onSearchOpen}
@@ -288,10 +293,11 @@ export function InboxSidebar({
           <button
             type="button"
             onClick={onOpen}
-            className={`flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-2 py-2 cursor-pointer transition-colors rounded-md mx-auto ${isOver
-              ? "bg-blue-100/80 dark:bg-blue-900/40"
-              : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 focus-visible:ring-inset`}
+            className={`flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-2 py-2 cursor-pointer transition-colors rounded-md mx-auto ${
+              isOver
+                ? "bg-blue-100/80 dark:bg-blue-900/40"
+                : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-500 focus-visible:ring-inset`}
             aria-label="Open inbox"
           >
             <div className="w-px flex-1 min-h-[12px] bg-neutral-200 dark:bg-neutral-700" />
@@ -307,7 +313,10 @@ export function InboxSidebar({
             <div className="w-px flex-1 min-h-[12px] bg-neutral-200 dark:bg-neutral-700" />
           </button>
           <div className="shrink-0 border-t border-neutral-100 dark:border-neutral-800 p-2 flex flex-col items-center gap-1">
-            <Tooltip content={`Settings (${SHORTCUT_DISPLAY.settings})`} side="right">
+            <Tooltip
+              content={`Settings (${SHORTCUT_DISPLAY.settings})`}
+              side="right"
+            >
               <button
                 type="button"
                 onClick={() => onSettingsOpen()}
@@ -327,7 +336,10 @@ export function InboxSidebar({
                 <Info className="size-5" aria-hidden />
               </button>
             </Tooltip>
-            <Tooltip content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`} side="right">
+            <Tooltip
+              content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`}
+              side="right"
+            >
               <button
                 type="button"
                 onClick={() => setTheme(getNextTheme(theme))}
@@ -372,7 +384,10 @@ export function InboxSidebar({
                   {SHORTCUT_DISPLAY.search}
                 </kbd>
               </button>
-              <Tooltip content={`Collapse sidebar (${SHORTCUT_DISPLAY.toggleSidebar})`} side="bottom">
+              <Tooltip
+                content={`Collapse sidebar (${SHORTCUT_DISPLAY.toggleSidebar})`}
+                side="bottom"
+              >
                 <button
                   type="button"
                   onClick={onClose}
@@ -400,7 +415,10 @@ export function InboxSidebar({
                   Connect JIRA
                 </button>
               ) : !hasJiraTicketsInDb ? (
-                <Tooltip content={`Fetch JIRA tickets (${SHORTCUT_DISPLAY.syncJira})`} side="bottom">
+                <Tooltip
+                  content={`Fetch JIRA tickets (${SHORTCUT_DISPLAY.syncJira})`}
+                  side="bottom"
+                >
                   <button
                     type="button"
                     disabled={syncing}
@@ -416,7 +434,10 @@ export function InboxSidebar({
                   </button>
                 </Tooltip>
               ) : (
-                <Tooltip content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`} side="bottom">
+                <Tooltip
+                  content={`Sync JIRA (${SHORTCUT_DISPLAY.syncJira})`}
+                  side="bottom"
+                >
                   <button
                     type="button"
                     disabled={syncing}
@@ -465,10 +486,28 @@ export function InboxSidebar({
                   >
                     <Select.Viewport className="p-1">
                       <Select.Item
-                        value="priority"
+                        value="custom"
                         className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
                       >
-                        <Select.ItemText>Priority</Select.ItemText>
+                        <Select.ItemText>Custom</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-3.5" aria-hidden />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                      <Select.Item
+                        value="priorityAscending"
+                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                      >
+                        <Select.ItemText>Priority (ascending)</Select.ItemText>
+                        <Select.ItemIndicator className="ml-auto">
+                          <Check className="size-3.5" aria-hidden />
+                        </Select.ItemIndicator>
+                      </Select.Item>
+                      <Select.Item
+                        value="priorityDescending"
+                        className="flex items-center gap-2 rounded px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-300 outline-none cursor-pointer data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-700"
+                      >
+                        <Select.ItemText>Priority (descending)</Select.ItemText>
                         <Select.ItemIndicator className="ml-auto">
                           <Check className="size-3.5" aria-hidden />
                         </Select.ItemIndicator>
@@ -660,10 +699,11 @@ export function InboxSidebar({
                           }
                         }}
                         placeholder="e.g. PROJ-123"
-                        className={`w-full px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${customKeyError
-                          ? "border-red-400 dark:border-red-500"
-                          : "border-neutral-300 dark:border-neutral-600"
-                          }`}
+                        className={`w-full px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 ${
+                          customKeyError
+                            ? "border-red-400 dark:border-red-500"
+                            : "border-neutral-300 dark:border-neutral-600"
+                        }`}
                       />
                       {customKeyError && (
                         <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
@@ -766,7 +806,10 @@ export function InboxSidebar({
                 </div>
               </form>
             ) : (
-              <Tooltip content={`Add a local ticket (${SHORTCUT_DISPLAY.newLocalTicket})`} side="top">
+              <Tooltip
+                content={`Add a local ticket (${SHORTCUT_DISPLAY.newLocalTicket})`}
+                side="top"
+              >
                 <button
                   type="button"
                   onClick={() => setShowAddForm(true)}
@@ -779,15 +822,19 @@ export function InboxSidebar({
           </div>
 
           <div
-            className={`mx-3 my-2 flex-1 overflow-y-auto min-h-[8rem] rounded-md border-2 border-dashed p-4 transition-colors duration-150 ${isOver
-              ? "border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
-              : "border-neutral-200/60 dark:border-neutral-600/60"
-              }`}
+            className={`mx-3 my-2 flex-1 overflow-y-auto min-h-[8rem] rounded-md border-2 border-dashed p-4 transition-colors duration-150 ${
+              isOver
+                ? "border-blue-500 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30"
+                : "border-neutral-200/60 dark:border-neutral-600/60"
+            }`}
           >
             {inboxContent}
           </div>
           <div className="shrink-0 border-t border-neutral-200 dark:border-neutral-700 p-3 flex items-center justify-between gap-2">
-            <Tooltip content={`Settings (${SHORTCUT_DISPLAY.settings})`} side="top">
+            <Tooltip
+              content={`Settings (${SHORTCUT_DISPLAY.settings})`}
+              side="top"
+            >
               <button
                 type="button"
                 onClick={() => onSettingsOpen()}
@@ -809,7 +856,10 @@ export function InboxSidebar({
                   <Info className="size-5" aria-hidden />
                 </button>
               </Tooltip>
-              <Tooltip content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`} side="top">
+              <Tooltip
+                content={`Toggle theme (${SHORTCUT_DISPLAY.toggleTheme})`}
+                side="top"
+              >
                 <button
                   type="button"
                   onClick={() => setTheme(getNextTheme(theme))}

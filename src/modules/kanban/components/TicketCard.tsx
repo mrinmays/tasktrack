@@ -24,6 +24,7 @@ export interface MoveTarget {
 
 interface TicketCardProps {
   readonly ticket: Ticket;
+  readonly allowReorderInColumn?: boolean;
   readonly moveTargets?: readonly MoveTarget[];
   readonly onMove?: (ticketId: string, columnId: string) => void;
   readonly onDelete?: (ticketId: string) => void;
@@ -34,6 +35,7 @@ interface TicketCardProps {
 
 export function TicketCard({
   ticket,
+  allowReorderInColumn = true,
   moveTargets,
   onMove,
   onDelete,
@@ -61,6 +63,7 @@ export function TicketCard({
     data: {
       type: "ticket" as const,
       columnId: ticket.columnId,
+      allowReorderInColumn,
     },
   });
 
