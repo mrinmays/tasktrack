@@ -701,29 +701,30 @@ export function TicketDetailSidebar({
 
                   <div className="space-y-3">
                     <div>
-                      <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                        Created
+                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                        Updated
                       </span>
-                      <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
-                        {formatTicketTimestamp(selectedTicket.createdAt)}
+                      <p className="text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
+                        {formatTicketTimestamp(selectedTicket.updatedAt)}
                       </p>
                     </div>
                     <div>
-                      <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                        Updated
+                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                        Created
                       </span>
-                      <p className="mt-1 text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
-                        {formatTicketTimestamp(selectedTicket.updatedAt)}
+                      <p className="text-sm text-neutral-900 dark:text-neutral-200 break-words leading-tight">
+                        {formatTicketTimestamp(selectedTicket.createdAt)}
                       </p>
                     </div>
                   </div>
 
-                  {isJira && selectedTicket.jiraData && (
-                    <div>
-                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-                        Comments
-                      </span>
-                      {(selectedTicket.jiraData.comments?.length ?? 0) > 0 ? (
+                  {isJira &&
+                    selectedTicket.jiraData &&
+                    (selectedTicket.jiraData.comments?.length ?? 0) > 0 && (
+                      <div>
+                        <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
+                          Comments
+                        </span>
                         <div className="space-y-3">
                           {buildJiraCommentTree(
                             selectedTicket.jiraData.comments ?? [],
@@ -735,13 +736,8 @@ export function TicketDetailSidebar({
                             />
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-sm text-neutral-900 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/50 rounded-md px-3 py-2 border border-neutral-200 dark:border-neutral-700 cursor-not-allowed select-text">
-                          No comments
-                        </p>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
                 </div>
 
                 {isEditable && (
