@@ -12,6 +12,7 @@ import { isValidTicketKey } from "@/modules/tickets/utils/validateTicketKey";
 import { useJiraTicketsQuery } from "@/modules/tickets/hooks/useTicketsQuery";
 import { TICKET_PRIORITY_VALUES, type TicketPriority } from "@/modules/tickets";
 import { TicketDescriptionEditor } from "@/components/TicketDescriptionEditor";
+import { Tooltip } from "@/components/Tooltip";
 import { isEmptyEditorHtml } from "@/utils/editorHtml";
 import { JiraAdfRenderer } from "@/modules/kanban/components/JiraAdfRenderer";
 import { SanitizedHtml } from "@/modules/kanban/components/SanitizedHtml";
@@ -112,16 +113,31 @@ function TicketKeyField({
 
   return (
     <div className="space-y-1.5">
-      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">
-        Link to ticket ID (optional)
-      </span>
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          Relates to ticket ID (optional)
+        </span>
+        <Tooltip
+          content="For reference only. You may optionally relate this ticket to an existing JIRA ticket for improved tracking"
+          side="top"
+        >
+          <button
+            type="button"
+            tabIndex={-1}
+            className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
+            aria-label="Ticket relation info"
+          >
+            <Info className="size-3.5" aria-hidden />
+          </button>
+        </Tooltip>
+      </div>
       <Select.Root
         value={selectMode === "existing" ? selectedKey : selectMode}
         onValueChange={handleSelectChange}
       >
         <Select.Trigger
           className="inline-flex w-full items-center justify-between px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-md text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500 focus:border-neutral-400 dark:focus:border-neutral-500 outline-none"
-          aria-label="Link to ticket ID"
+          aria-label="Relates to ticket ID"
         >
           <Select.Value placeholder="No ticket ID" />
           <Select.Icon>
@@ -655,20 +671,20 @@ export function TicketDetailSidebar({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div className="rounded-md bg-neutral-100 dark:bg-neutral-800/60 px-3 py-2.5">
+                  <div className="space-y-3">
+                    <div>
                       <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Created
                       </span>
-                      <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-200 break-words">
+                      <p className="mt-1 text-base font-medium text-neutral-900 dark:text-neutral-200 break-words leading-tight">
                         {formatTicketTimestamp(selectedTicket.createdAt)}
                       </p>
                     </div>
-                    <div className="rounded-md bg-neutral-100 dark:bg-neutral-800/60 px-3 py-2.5">
+                    <div>
                       <span className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                         Updated
                       </span>
-                      <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-200 break-words">
+                      <p className="mt-1 text-base font-medium text-neutral-900 dark:text-neutral-200 break-words leading-tight">
                         {formatTicketTimestamp(selectedTicket.updatedAt)}
                       </p>
                     </div>

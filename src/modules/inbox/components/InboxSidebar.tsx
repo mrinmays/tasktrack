@@ -534,9 +534,24 @@ export function InboxSidebar({
                   minHeight="4rem"
                 />
                 <div className="space-y-1.5">
-                  <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                    Link to ticket ID (optional)
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="block text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                      Relates to ticket ID (optional)
+                    </span>
+                    <Tooltip
+                      content="For reference only. You may optionally relate this ticket to an existing JIRA ticket for improved tracking"
+                      side="top"
+                    >
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        className="text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
+                        aria-label="Ticket relation info"
+                      >
+                        <Info className="size-3.5" aria-hidden />
+                      </button>
+                    </Tooltip>
+                  </div>
                   <Select.Root
                     value={
                       ticketKeyMode === "existing" ? selectedKey : ticketKeyMode
