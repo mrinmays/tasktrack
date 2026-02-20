@@ -59,11 +59,16 @@ export function KanbanColumn({
 
   const { active } = useDndContext();
   const isTicketDragActive = active?.data.current?.type === "ticket";
+  const isColumnDragActive = active?.data.current?.type === "column";
+  const activeColumnDragId =
+    isColumnDragActive && typeof active?.id === "string" ? active.id : null;
 
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: column.id,
   });
   const isTicketDropOver = isOver && isTicketDragActive;
+  const isColumnDropOver =
+    isOver && isColumnDragActive && activeColumnDragId !== column.id;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -105,7 +110,11 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex-shrink-0 w-[85vw] max-w-80 sm:w-72 bg-neutral-50 dark:bg-neutral-800 rounded-lg p-3 sm:p-4 flex flex-col"
+      className={`flex-shrink-0 w-[85vw] max-w-80 sm:w-72 rounded-lg p-3 sm:p-4 flex flex-col transition-colors ${
+        isColumnDropOver
+          ? "bg-blue-50 dark:bg-blue-950/30 ring-2 ring-inset ring-blue-500/70 dark:ring-blue-400/70"
+          : "bg-neutral-50 dark:bg-neutral-800"
+      }`}
     >
       <div className="mb-4">
         {isEditing ? (

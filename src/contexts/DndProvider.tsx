@@ -55,9 +55,15 @@ export function DndProvider({ children }: DndProviderProps) {
       | undefined;
 
     if (dragType === "column") {
+      const cachedColumns =
+        queryClient.getQueryData<Column[]>(queryKeys.columns) ?? [];
+      const columnIds = new Set(cachedColumns.map((column) => column.id));
       const columnContainers = args.droppableContainers.filter(
-        (container) => container.data.current?.type === "column",
+        (container) => columnIds.has(String(container.id)),
       );
+      if (columnContainers.length === 0) {
+        return closestCenter(args);
+      }
       return closestCenter({
         ...args,
         droppableContainers: columnContainers,
@@ -65,7 +71,7 @@ export function DndProvider({ children }: DndProviderProps) {
     }
 
     return rectIntersection(args);
-  }, []);
+  }, [queryClient]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const id = event.active.id as string;
